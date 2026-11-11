@@ -1,0 +1,32 @@
+# Reinstalled / rebuilt inside the image
+node_modules
+.next
+out
+
+# Secrets + local config (env reaches the image via build args + runtime env_file)
+.env
+.env.*
+!.env.example
+
+# VCS + tooling
+.git
+.gitignore
+.github
+.vscode
+.idea
+
+# Docker meta
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Not needed at runtime
+supabase
+.claude
+Skills
+checkpoint.md
+HANDOFF.md
+DESIGN.md
+README.md
+*.log
+.DS_Store

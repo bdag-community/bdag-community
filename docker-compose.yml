@@ -1,0 +1,56 @@
+# Build + serve the production Next.js standalone image in its own container.
+#
+# With local provider and asset configuration, the secure intake helper keeps
+# an ignored `.env` link to `.env.local`. Compose reads the public BUILD args
+# through that link, while env_file injects server-only secrets only into the
+# running container:
+#
+#   docker compose up --build -d
+#
+# Without Supabase (fresh clone — site serves seed news, contact degrades):
+#
+#   docker compose up --build -d
+#
+# Open http://localhost:3011 . Logs: docker compose logs -f . Stop: docker compose down
+# Port 3011 is deliberately distinct from `next dev` (3002) AND from the
+# bdag-miner-sales containers (3000/3010) so all sibling sites can run at once.
+services:
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}
+        # Official public always-pass test key. A value passed with --env-file
+        # overrides it; production uses ops/deploy.sh and rejects test keys.
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-1x00000000000000000000AA}
+        ASSET_STORAGE_ENVIRONMENT: ${ASSET_STORAGE_ENVIRONMENT:-development}
+        ASSET_DELIVERY_ORIGIN: ${ASSET_DELIVERY_ORIGIN:-}
+    image: bdag-community:latest
+    container_name: bdag-community
+    env_file:
+      # Optional: absent on a fresh clone (graceful no-Supabase mode).
+      - path: .env.local
+        required: false
+    ports:
+      # Loopback only. Deliberately NOT 0.0.0.0: this container carries real
+      # provider configuration and must stay off the LAN and every other
+      # interface. To review from another device on a private mesh, add the
+      # extra binding in a local-only docker-compose.override.yml (gitignored)
+      # rather than here. The right-hand :3000 is the port INSIDE the
+      # container; the host port stays 3011.
+      - "127.0.0.1:3011:3000"
+    restart: unless-stopped
+    healthcheck:
+      # `node` is always present in the runner image (slim has no curl/wget).
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:3000/api/health',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

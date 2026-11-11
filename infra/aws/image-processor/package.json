@@ -1,0 +1,21 @@
+{
+  "name": "@bdag-community/image-processor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test ../../../tests/image-processor.test.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1109.0",
+    "sharp": "0.35.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "5.9.3"
+  }
+}

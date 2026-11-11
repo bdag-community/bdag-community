@@ -1,0 +1,348 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Controlled CloudFront delivery for private BlockDAG Community published article assets.",
+  "Parameters": {
+    "Environment": {
+      "Type": "String",
+      "AllowedValues": [
+        "development",
+        "production"
+      ],
+      "Description": "The isolated asset environment served by this distribution."
+    },
+    "AssetBucketName": {
+      "Type": "String",
+      "AllowedPattern": "^bdag-community-assets-(development|production)-[0-9]{12}-eu-central-1$",
+      "Description": "The existing private eu-central-1 asset bucket."
+    },
+    "EnableCustomDomain": {
+      "Type": "String",
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Default": "false",
+      "Description": "Production only: enable assets.bdag.community after its delegated zone is live."
+    },
+    "WebAclArn": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Optional dedicated CloudFront-scope WAF web ACL supplied by the approved CloudFront plan."
+    }
+  },
+  "Rules": {
+    "CustomDomainProductionOnly": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Or": [
+              {
+                "Fn::Equals": [
+                  {
+                    "Ref": "EnableCustomDomain"
+                  },
+                  "false"
+                ]
+              },
+              {
+                "Fn::Equals": [
+                  {
+                    "Ref": "Environment"
+                  },
+                  "production"
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "The assets.bdag.community alias belongs only to production."
+        }
+      ]
+    }
+  },
+  "Conditions": {
+    "IsProduction": {
+      "Fn::Equals": [
+        {
+          "Ref": "Environment"
+        },
+        "production"
+      ]
+    },
+    "CustomDomainEnabled": {
+      "Fn::And": [
+        {
+          "Condition": "IsProduction"
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "EnableCustomDomain"
+            },
+            "true"
+          ]
+        }
+      ]
+    },
+    "HasWebAcl": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "WebAclArn"
+            },
+            ""
+          ]
+        }
+      ]
+    }
+  },
+  "Resources": {
+    "AssetHostedZone": {
+      "Type": "AWS::Route53::HostedZone",
+      "Condition": "IsProduction",
+      "Properties": {
+        "Name": "assets.bdag.community",
+        "HostedZoneTags": [
+          {
+            "Key": "Project",
+            "Value": "bdag-community"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CloudFormation"
+          }
+        ]
+      }
+    },
+    "AssetCertificate": {
+      "Type": "AWS::CertificateManager::Certificate",
+      "Condition": "CustomDomainEnabled",
+      "Properties": {
+        "DomainName": "assets.bdag.community",
+        "ValidationMethod": "DNS",
+        "DomainValidationOptions": [
+          {
+            "DomainName": "assets.bdag.community",
+            "HostedZoneId": {
+              "Ref": "AssetHostedZone"
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "bdag-community"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "AssetOriginAccessControl": {
+      "Type": "AWS::CloudFront::OriginAccessControl",
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Description": "Private BlockDAG Community published-asset origin",
+          "Name": {
+            "Fn::Sub": "bdag-community-assets-${Environment}-oac"
+          },
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4"
+        }
+      }
+    },
+    "AssetDistribution": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Properties": {
+        "DistributionConfig": {
+          "Aliases": {
+            "Fn::If": [
+              "CustomDomainEnabled",
+              [
+                "assets.bdag.community"
+              ],
+              {
+                "Ref": "AWS::NoValue"
+              }
+            ]
+          },
+          "Comment": {
+            "Fn::Sub": "BlockDAG Community ${Environment} published assets"
+          },
+          "DefaultCacheBehavior": {
+            "AllowedMethods": [
+              "GET",
+              "HEAD"
+            ],
+            "CachePolicyId": "b2884449-e4de-46a7-ac36-70bc7f1ddd6d",
+            "CachedMethods": [
+              "GET",
+              "HEAD"
+            ],
+            "Compress": true,
+            "ResponseHeadersPolicyId": "67f7725c-6f97-4210-82d7-5512b31e9d03",
+            "TargetOriginId": "private-published-assets",
+            "ViewerProtocolPolicy": "redirect-to-https"
+          },
+          "Enabled": true,
+          "HttpVersion": "http2and3",
+          "IPV6Enabled": true,
+          "Origins": [
+            {
+              "DomainName": {
+                "Fn::Sub": "${AssetBucketName}.s3.eu-central-1.amazonaws.com"
+              },
+              "Id": "private-published-assets",
+              "OriginAccessControlId": {
+                "Ref": "AssetOriginAccessControl"
+              },
+              "S3OriginConfig": {
+                "OriginAccessIdentity": ""
+              }
+            }
+          ],
+          "PriceClass": "PriceClass_200",
+          "Restrictions": {
+            "GeoRestriction": {
+              "RestrictionType": "none"
+            }
+          },
+          "ViewerCertificate": {
+            "Fn::If": [
+              "CustomDomainEnabled",
+              {
+                "AcmCertificateArn": {
+                  "Ref": "AssetCertificate"
+                },
+                "MinimumProtocolVersion": "TLSv1.2_2021",
+                "SslSupportMethod": "sni-only"
+              },
+              {
+                "CloudFrontDefaultCertificate": true,
+                "MinimumProtocolVersion": "TLSv1"
+              }
+            ]
+          },
+          "WebACLId": {
+            "Fn::If": [
+              "HasWebAcl",
+              {
+                "Ref": "WebAclArn"
+              },
+              {
+                "Ref": "AWS::NoValue"
+              }
+            ]
+          }
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "bdag-community"
+          },
+          {
+            "Key": "Owner",
+            "Value": "BlockDAG Engineering"
+          },
+          {
+            "Key": "Environment",
+            "Value": {
+              "Ref": "Environment"
+            }
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CloudFormation"
+          }
+        ]
+      }
+    },
+    "AssetAliasRecord": {
+      "Type": "AWS::Route53::RecordSet",
+      "Condition": "CustomDomainEnabled",
+      "Properties": {
+        "AliasTarget": {
+          "DNSName": {
+            "Fn::GetAtt": [
+              "AssetDistribution",
+              "DomainName"
+            ]
+          },
+          "EvaluateTargetHealth": false,
+          "HostedZoneId": "Z2FDTNDATAQYW2"
+        },
+        "HostedZoneId": {
+          "Ref": "AssetHostedZone"
+        },
+        "Name": "assets.bdag.community",
+        "Type": "A"
+      }
+    },
+    "AssetAliasIpv6Record": {
+      "Type": "AWS::Route53::RecordSet",
+      "Condition": "CustomDomainEnabled",
+      "Properties": {
+        "AliasTarget": {
+          "DNSName": {
+            "Fn::GetAtt": [
+              "AssetDistribution",
+              "DomainName"
+            ]
+          },
+          "EvaluateTargetHealth": false,
+          "HostedZoneId": "Z2FDTNDATAQYW2"
+        },
+        "HostedZoneId": {
+          "Ref": "AssetHostedZone"
+        },
+        "Name": "assets.bdag.community",
+        "Type": "AAAA"
+      }
+    }
+  },
+  "Outputs": {
+    "AssetDistributionId": {
+      "Description": "The exact controlled asset distribution identifier.",
+      "Value": {
+        "Ref": "AssetDistribution"
+      }
+    },
+    "AssetDistributionArn": {
+      "Description": "The exact distribution ARN for the private S3 origin policy.",
+      "Value": {
+        "Fn::Sub": "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${AssetDistribution}"
+      }
+    },
+    "AssetDistributionDomainName": {
+      "Description": "The environment delivery hostname.",
+      "Value": {
+        "Fn::GetAtt": [
+          "AssetDistribution",
+          "DomainName"
+        ]
+      }
+    },
+    "AssetHostedZoneNameServers": {
+      "Condition": "IsProduction",
+      "Description": "Delegate assets.bdag.community to these name servers before enabling the custom domain.",
+      "Value": {
+        "Fn::Join": [
+          ",",
+          {
+            "Fn::GetAtt": [
+              "AssetHostedZone",
+              "NameServers"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

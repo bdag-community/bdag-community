@@ -1,0 +1,2552 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Mirror of the Tailwind tokens for non-Tailwind consumers (canvas, SVG). */
+  --base-void: #0e0715;
+  --container: #170f23;
+  --elevated: #1f1630;
+  --border: #3a2b50;
+  --border-strong: #453259;
+  --accent: #a856fb;
+  --accent-magenta: #d33aee;
+  --accent-pink: #f45fc4;
+  --accent-glow: #e08cff;
+  --accent-teal: #2ce0ce;
+  --warn-orange: #f59e0b;
+  --on-surface: #ece9f3;
+  /* outline (#6E6385) is a BORDER colour: 3.57:1 on void, 3.11:1 on elevated,
+     and it is used at 10-12px for real information in 18 places. This is the
+     same register at AA. `outline` stays, for borders and hairlines, which is
+     what its name says. */
+  --on-surface-muted: #8b819e;
+}
+
+/* NO GLOBAL SMOOTH SCROLL, and this is deliberate rather than an omission.
+   `html { scroll-behavior: smooth }` lived here for the hero scroll cue and
+   the in-page anchors, and CSS cannot tell those apart from the App Router's
+   scroll-to-top on a page transition. So every navigation animated the whole
+   document height, which is slow on a long page, and the animation is
+   cancellable: anything touching scroll while it ran stopped it where it
+   stood, which is why transitions kept finishing a little short of the top
+   instead of at it. One rule, both complaints.
+
+   Anchor jumps are instant now. If a smooth anchor is ever wanted back, it
+   belongs on the one link that wants it, as scrollIntoView({behavior:
+   "smooth"}), never as a global rule that route changes inherit. */
+
+html {
+  background-color: var(--base-void);
+  /* In-app browsers (Messenger, Telegram) and iOS Safari inflate text via
+     text-size-adjust auto — boosted numerals were overflowing the live-stat
+     boxes. The layout already sets its own responsive sizes; adjustment off. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Always reserve the scrollbar gutter so opening a modal (which locks body
+     scroll + hides the scrollbar) does NOT shift the page sideways. */
+  scrollbar-gutter: stable;
+  /* Let the hero break out to the full viewport width without a h-scrollbar. */
+  overflow-x: clip;
+  /* Kill the grey tap-flash on iOS (focus-visible rings cover keyboard a11y). */
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  color: var(--on-surface);
+}
+
+/* Ambient brand wash — the big-brother inversion of the family glow: MAGENTA
+   leads top-right, purple answers top-left, and a faint pink bloom rises from
+   the low center. A fixed ::before layer (iOS-safe, vs background-attachment). */
+/* TEMP glow-off — restore: grep "TEMP glow-off"
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(
+      55rem 38rem at 82% -8%,
+      rgba(211, 58, 238, 0.12),
+      transparent 60%
+    ),
+    radial-gradient(
+      46rem 30rem at 4% 4%,
+      rgba(168, 86, 251, 0.09),
+      transparent 60%
+    ),
+    radial-gradient(
+      60rem 26rem at 50% 112%,
+      rgba(244, 95, 196, 0.05),
+      transparent 65%
+    ),
+    radial-gradient(
+      44rem 26rem at 96% 62%,
+      rgba(44, 224, 206, 0.055),
+      transparent 60%
+    );
+}
+*/
+
+@layer components {
+  /* Shared display type scale — stately, normal case (the sibling site shouts
+     in uppercase; the big brother does not). */
+  .display {
+    @apply font-display text-5xl font-bold leading-[0.95] tracking-[-0.02em] text-balance sm:text-6xl md:text-7xl lg:text-8xl;
+  }
+  .h1 {
+    @apply font-display text-4xl font-bold leading-[1.04] tracking-[-0.02em] text-balance sm:text-5xl lg:text-6xl;
+  }
+  .h2 {
+    @apply font-display text-3xl font-bold leading-[1.1] tracking-[-0.01em] text-balance sm:text-4xl lg:text-5xl;
+  }
+  .h3 {
+    @apply font-display text-xl font-semibold leading-snug tracking-[-0.01em] sm:text-2xl;
+  }
+  .h4 {
+    @apply font-display text-base font-semibold sm:text-lg;
+  }
+  .lead {
+    @apply max-w-[60ch] text-base leading-relaxed text-on-surface-variant text-pretty sm:text-[1.0625rem];
+  }
+  .body {
+    @apply max-w-[68ch] text-[0.9375rem] leading-relaxed text-on-surface-variant text-pretty;
+  }
+  .body-sm {
+    @apply max-w-[68ch] text-sm leading-relaxed text-on-surface-variant;
+  }
+  .caption {
+    @apply max-w-[68ch] text-xs leading-relaxed text-on-surface-variant;
+  }
+  .eyebrow {
+    @apply font-mono text-xs font-medium uppercase tracking-[0.22em] text-pink-soft;
+  }
+  .label-caps {
+    @apply font-mono text-xs uppercase tracking-[0.18em];
+  }
+  /* Premium glass surface — genuinely translucent (the body::before wash + the
+     backdrop blur show through), with a subtle two-tone plum tint. */
+  .glass-card {
+    background-image: linear-gradient(
+      160deg,
+      rgba(23, 15, 35, 0.6),
+      rgba(15, 9, 24, 0.72)
+    );
+  }
+  /* Keyboard focus ring for in-content text links (chrome links carry their own).
+     Adds the ring without touching resting/hover appearance. */
+  .focus-ring {
+    @apply rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-base-void;
+  }
+
+  .rich-text-editor,
+  .rich-text-body {
+    @apply break-words text-base leading-[1.75] text-on-surface-variant;
+  }
+  .rich-text-editor > * + *,
+  .rich-text-body > * + * {
+    @apply mt-5;
+  }
+  .rich-text-editor h2,
+  .rich-text-body h2 {
+    @apply font-display text-2xl font-semibold leading-snug tracking-[-0.01em] text-on-surface sm:text-3xl;
+  }
+  .rich-text-editor h3,
+  .rich-text-body h3 {
+    @apply font-display text-xl font-semibold leading-snug text-on-surface sm:text-2xl;
+  }
+  .rich-text-editor strong,
+  .rich-text-body strong {
+    @apply font-semibold text-on-surface;
+  }
+  .rich-text-editor a,
+  .rich-text-body a {
+    @apply focus-ring text-accent-soft underline decoration-accent/50 underline-offset-4 transition-colors hover:text-on-surface;
+  }
+  .rich-text-editor a[data-article-button="true"],
+  .rich-text-body a[data-article-button="true"] {
+    @apply btn-primary my-5 inline-flex min-h-[44px] max-w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-center font-semibold leading-snug no-underline;
+    overflow-wrap: anywhere;
+  }
+  .rich-text-editor a[data-article-button="true"]::after,
+  .rich-text-body a[data-article-button="true"]::after {
+    content: "↗";
+    flex-shrink: 0;
+  }
+  .rich-text-editor a[data-article-button="true"].ProseMirror-selectednode {
+    @apply outline outline-2 outline-offset-4 outline-accent-soft;
+  }
+  .rich-text-editor blockquote,
+  .rich-text-body blockquote {
+    @apply border-l-2 border-accent/60 pl-4 italic text-on-surface;
+  }
+  .rich-text-editor ul,
+  .rich-text-body ul {
+    @apply list-disc space-y-2 pl-6;
+  }
+  .rich-text-editor ol,
+  .rich-text-body ol {
+    @apply list-decimal space-y-2 pl-6;
+  }
+
+  /* --------------------------------- buttons ------------------------------
+     No gradient on either variant. With the page's gradients gone the pair
+     has to carry weight some other way, so both are built the same: a flat
+     brand-purple surface, a 1px ring that separates it from the void, and a
+     lit TOP edge — the same trick the chain uses, light arriving from above.
+     They differ only in how much of that surface is filled in, which is what
+     makes them read as one family at two volumes. */
+  .btn-primary {
+    background-color: #a856fb;
+    color: var(--base-void);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 0 0 1px rgba(224, 140, 255, 0.5);
+  }
+  .btn-primary:hover {
+    background-color: #b972fd;
+  }
+  .btn-primary:active {
+    background-color: #9d47f0;
+  }
+  /* Secondary: a real surface, not an outline. The old one was a hairline on
+     nothing, which reads as disabled next to a filled key — a faint fill and
+     the same lit top edge give it a body, and the hover has somewhere to go. */
+  .btn-ghost {
+    border: 1px solid rgba(168, 86, 251, 0.45);
+    background-color: rgba(168, 86, 251, 0.07);
+    color: #d7bcff;
+    box-shadow: inset 0 1px 0 rgba(201, 169, 255, 0.12);
+  }
+  .btn-ghost:hover {
+    border-color: rgba(201, 169, 255, 0.8);
+    background-color: rgba(168, 86, 251, 0.15);
+    color: var(--on-surface);
+  }
+  .btn-ghost:active {
+    background-color: rgba(168, 86, 251, 0.2);
+  }
+}
+
+@layer utilities {
+  /* The hero identity word, resolved. Flat light-purple rather than the old
+     three-stop gradient: with the page's gradients gone, one solid brand
+     colour at display scale reads as more deliberate than a ramp, and it lets
+     the NODE below carry the moment instead. */
+  .hero-word {
+    color: #e08cff;
+  }
+  /* Purple -> magenta -> pink gradient text — kept as a token but no longer
+     used by the hero (see .hero-word).
+     The small bottom padding stops background-clip:text shaving descenders. */
+  .text-gradient {
+    background-image: linear-gradient(
+      135deg,
+      #e08cff 0%,
+      #c05cf7 40%,
+      #f45fc4 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    padding-bottom: 0.12em;
+  }
+  /* Full-viewport-width breakout from a max-width container (scrollbar-safe). */
+  .full-bleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+  /* Subtle below-the-fold depth band. A SWELL, not a step: it starts and ends
+     at zero alpha, so the band has no edge of its own at either end and reads
+     as the page breathing rather than as a panel laid on it.
+     It used to open at 0.55 with a hairline on top, which put a hard, visibly
+     lighter seam a hundred pixels under the hero — the one place the chain
+     crosses. The peak is also much lower now, so the page below the hero
+     stays at the hero's own darkness instead of lifting away from it.
+     KEEP IN STEP with veilAt() in geometry.ts: the spine compensates the
+     circuit's alpha for exactly this veil, and models this curve to do it. */
+  .section-surface {
+    background-image: linear-gradient(
+      180deg,
+      rgba(31, 22, 48, 0) 0%,
+      rgba(31, 22, 48, 0.3) 22%,
+      rgba(31, 22, 48, 0) 100%
+    );
+  }
+}
+
+/* ===========================================================================
+   THE SPINE — one DAG chain running the length of every page.
+
+   Position, fill and draw state are written IMPERATIVELY by <Spine>, onto the
+   leaf elements that consume them — never as custom properties on a shared
+   ancestor, which would invalidate the whole subtree every frame. The only
+   custom properties still crossing that boundary are the four --hero-* on the
+   hero section, which the hero block's own SVG reads.
+   ========================================================================= */
+
+.spine {
+  position: absolute;
+  inset: 0;
+  /* Exactly -1, not -10: body::before is also -1, and equal z-index breaks
+     ties by tree order — so the spine paints ABOVE the ambient wash and BELOW
+     every scrap of content. It can never occlude text or eat a click. */
+  z-index: -1;
+  pointer-events: none;
+  contain: layout style; /* never `paint` — it must not clip */
+  --rail-x: calc(7px + env(safe-area-inset-left));
+}
+@media (min-width: 768px) {
+  .spine {
+    /* Mirrors `mx-auto w-full max-w-site` + the Section gutter, so the rail
+       keeps 19px of clearance from the text edge at every width. 100% is the
+       overlay's width, not 100vw (scrollbar-gutter makes 100vw too wide). */
+    --rail-x: calc(max(0px, (100% - 1440px) / 2) + 13px);
+  }
+}
+.spine[data-quiet] * {
+  transition-duration: 0s !important;
+  animation: none !important;
+}
+/* NOT .spine-fill: promoting up to 34 hairlines costs more than it saves.
+   (The old `.spine-seg::after` target here was dead — the lit fill became a
+   real child so <Spine> could write a resolved transform straight to it.) */
+.spine.is-live .spine-head {
+  will-change: transform;
+}
+
+/* --- trunk: dark hairline always, lit fill drawn by the reading line --- */
+/* THE CHAIN ITSELF is 1.8px the whole way down — hero descender, lead-in and
+   trunk are one continuous line and must never step. Its BRANCHES (ticks,
+   forks, ghost strand, cross-references) stay at 1.2: they are references off
+   the chain, not the chain, and a flat weight would lose that hierarchy. */
+.spine-seg {
+  position: absolute;
+  left: var(--rail-x);
+  top: var(--seg-top, 0px);
+  width: 1.8px;
+  height: var(--seg-h, 0px);
+  background: rgba(58, 43, 80, var(--seg-dark, 0.55));
+}
+/* The lit fill is a child, not a pseudo-element: <Spine> writes the resolved
+   scaleY straight onto it, so no custom property invalidation reaches the
+   rest of the overlay. It rests at 0 — a page with no JS shows only the
+   dark hairline, which is a complete, quiet resting state. */
+.spine-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--seg-c, #a856fb);
+  opacity: var(--seg-a, 0.3);
+  transform-origin: top;
+  transform: scaleY(0);
+}
+
+/* --- the head: the reader's own position on the chain --- */
+/* Position, opacity and length are all written imperatively by <Spine>; it
+   rests off-screen at 0 so a page with no JS never shows a stray head. */
+.spine-head {
+  position: absolute;
+  left: var(--rail-x);
+  top: 0;
+  width: 1.8px;
+  height: 0;
+  transform: translate3d(0, 0, 0);
+  opacity: 0;
+}
+.spine-head-body {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1.8px;
+  /* Fixed height, scaled by transform: it lengthens with speed and reads as
+     heat, without dirtying layout on every frame. The gradient is
+     percentage-based, so a scaled body is identical to a resized one. */
+  height: 300px;
+  transform-origin: bottom;
+  transform: scaleY(0.533);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(201, 169, 255, 0.5) 60%,
+    rgba(201, 169, 255, 0.92)
+  );
+}
+.spine-head-tip {
+  position: absolute;
+  bottom: -2.25px;
+  left: -1.35px;
+  width: 4.5px;
+  height: 4.5px;
+  border-radius: 9999px;
+  /* Only the 3px tip is teal: the machine's position, not the human's. */
+  background: var(--accent-teal);
+  /* TEMP glow-off: box-shadow: 0 0 10px rgba(44, 224, 206, 0.7); */
+}
+
+/* --- section blocks --- */
+.spine-node {
+  position: absolute;
+  left: var(--rail-x);
+  top: 0;
+  width: 0;
+  height: 0;
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.spine-node-dot {
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 11px;
+  height: 11px;
+  border-radius: 9999px;
+  border: 1.2px solid var(--border-strong);
+  background: var(--elevated);
+  opacity: 0.55;
+  transform: scale(0.6);
+  transition:
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.spine-node.is-lit .spine-node-dot {
+  transform: scale(1);
+  opacity: 1;
+  border-color: transparent;
+  background-image: linear-gradient(
+    135deg,
+    #a856fb 0%,
+    #d33aee 55%,
+    #f45fc4 100%
+  );
+  /* TEMP glow-off: box-shadow: 0 0 22px -6px rgba(211, 58, 238, 0.5); */
+}
+.spine-node[data-kind="terminal"].is-lit .spine-node-dot {
+  background-image: none;
+  background-color: var(--accent-teal);
+  /* TEMP glow-off: box-shadow: 0 0 12px rgba(44, 224, 206, 0.55); */
+}
+.spine-node[data-kind="terminal"].is-lit .spine-node-dot::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 9999px;
+  background: rgba(44, 224, 206, 0.4);
+  animation: spine-ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes spine-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  75%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+/* The edge from the spine into the section it references. */
+.spine-tick {
+  position: absolute;
+  left: 6px;
+  top: 0;
+  height: 1.2px;
+  background: linear-gradient(
+    to right,
+    rgba(201, 169, 255, 0.32),
+    rgba(201, 169, 255, 0)
+  );
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1) 60ms;
+}
+.spine-node.is-lit .spine-tick {
+  transform: scaleX(1);
+}
+
+/* --- the graph layer: what makes it a DAG and not a progress rail --- */
+.spine-orn {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+/* The lead-in is the DESCENDER continued: it starts on the hero's bottom edge
+   exactly where the descender ends, so it carries the descender's weight, not
+   the trunk's. It thins to the trunk's 1.2 once the chain has settled into the
+   margin, which reads as a branch narrowing rather than as a seam. */
+.spine-lead-dark {
+  stroke: rgba(58, 43, 80, 0.55);
+  stroke-width: 1.8;
+}
+/* stroke-dasharray and stroke-dashoffset are both written by <Spine>: the
+   dash equals the measured path length, so it rests fully retracted. */
+.spine-lead {
+  stroke: rgba(168, 86, 251, 0.32);
+  stroke-width: 1.8;
+}
+.spine-ghost,
+.spine-cross {
+  stroke: rgba(201, 169, 255, 0.1);
+  stroke-width: 1.2;
+  stroke-dasharray: 2 6;
+}
+.spine-cross {
+  stroke: rgba(201, 169, 255, 0.08);
+}
+.spine-inherit-ring {
+  stroke: rgba(201, 169, 255, 0.34);
+}
+.spine-inherit-ghost {
+  stroke: rgba(201, 169, 255, 0.9);
+}
+.spine-fork-line {
+  stroke: rgba(201, 169, 255, 0.2);
+  stroke-width: 1.2;
+}
+
+/* --- Act II: the routed circuit through the stats band onto the card --- */
+/* The dark base is always there — the chain exists before you charge it — and
+   the lit copy is drawn over it by the reading line. Alphas run ABOVE the
+   trunk's because the circuit crosses .section-surface, whose translucent
+   gradient eats roughly 45% of it at the band's top edge. */
+/* miter + butt, not round: the sharp corners ARE the brief, and a round cap
+   puts a 0.9px bulge on each end of a 1.8px line. */
+.spine-circuit-dark {
+  stroke: rgba(90, 68, 122, 0.5);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  /* Same subpath structure as the lit runs — it breaks at every node block
+     too — so it wants the same terminals. */
+  stroke-linecap: round;
+}
+/* Round caps now that the corners are arcs: a run ends tangent to the next
+   one, so a round cap closes the join invisibly, and the free ends (into the
+   hero above, onto the card below, and either side of a node block) want the
+   softer terminal anyway. */
+.spine-circuit-run {
+  stroke: url(#spine-circuit-ramp);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* --------------------------- travelling charges ---------------------------
+   One shape, used twice: the front of the draw (where the energy has actually
+   reached) and the pair that keep running each framed border afterwards. A
+   bright 2px core inside a soft radial bloom — a paint server rather than a
+   drop-shadow, because a filter on a moving dot is re-rasterised every frame
+   it moves, and these move constantly. */
+.spine-bolt {
+  fill: var(--accent-teal);
+}
+.spine-bolt-halo {
+  fill: url(#spine-bolt-glow);
+}
+/* The front of the draw: where the energy has actually reached. One on the
+   trunk, plus one per fork arm for the span the trunk's front stands down. */
+.spine-circuit-front,
+.spine-arm-front {
+  opacity: 0;
+}
+.spine.is-live .spine-circuit-front,
+.spine.is-live .spine-arm-front {
+  will-change: transform;
+}
+/* A node block per cell, in the brand purple, drawn exactly the way the
+   warning card's frame is one section below: two halves released where the
+   chain arrives and meeting where it leaves. Both are normalised with
+   pathLength, so they finish together whatever their real lengths, and the
+   whole thing costs zero per-frame writes — a class flip and a transition. */
+.spine-cell-arc {
+  stroke: rgba(168, 86, 251, 0.95);
+  stroke-width: 1.4;
+}
+/* TEMP glow-off — the wide dim bloom under each cell block. With no `stroke`
+   the pooled paths default to stroke:none, so they cost nothing and Spine's
+   geometry writes stay valid.
+.spine-cell-glow {
+  stroke: rgba(168, 86, 251, 0.16);
+  stroke-width: 5;
+}
+*/
+.spine-cell-arc,
+.spine-cell-glow {
+  stroke-linecap: butt;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.spine-cell.is-lit .spine-cell-arc,
+.spine-cell.is-lit .spine-cell-glow {
+  stroke-dashoffset: 0;
+}
+
+/* The chain's terminus used to be a pinging teal dot where the route ends,
+   just above the non-affiliation banner. It is gone deliberately: the route
+   already ends by simply stopping being drawn, and a pulsing spark parked
+   over the legal close pulled the eye to the one place on the page that
+   should read as quiet. The last framed section is still `circuit.complete`
+   and still lights its own border — that is the arrival signal now. */
+
+/* --- News link arrival ---------------------------------------------------
+   The circuit does not fan over the row any more: it runs down the middle to
+   the cards' own centre line and links all three along it, BEHIND them. Once
+   both fronts land, Spine flips ONE class on the section and all three cards
+   take the resting-hover treatment together — the same border and halo a
+   pointer gives one card, which is why hover itself now goes further (see
+   Card's `interactive`). The lift is deliberately NOT included: rising is a
+   pointer affordance, and three cards lifting at once reads as a glitch. */
+@media (min-width: 1024px) {
+  [data-spine-news] [data-spine-news-card] > .glass-card {
+    transition:
+      border-color 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  [data-spine-news].is-news-reached [data-spine-news-card] > .glass-card {
+    border-color: rgba(168, 86, 251, 0.4);
+    box-shadow: 0 0 22px -6px rgba(211, 58, 238, 0.28);
+  }
+
+  /* A pointer still wins over the arrival state — same properties, more of
+     them, and it must not read as "already on" when the chain has landed. */
+  [data-spine-news].is-news-reached
+    [data-spine-news-card]
+    > .glass-card:hover,
+  [data-spine-news].is-news-reached
+    [data-spine-news-card]
+    > .glass-card:focus-within {
+    border-color: rgba(201, 169, 255, 0.75);
+    box-shadow:
+      0 0 34px -6px rgba(211, 58, 238, 0.42),
+      0 0 64px -16px rgba(244, 95, 196, 0.2);
+  }
+
+  [data-spine-news][data-spine-news-quiet]
+    [data-spine-news-card]
+    > .glass-card {
+    transition: none;
+  }
+}
+
+/* --- a framed section: its own border, drawn by the chain --- */
+/* left/top/width/height are written by <Spine> so the frame lands on the
+   host's BORDER box; `inset: 0` would resolve against its padding box.
+   z-index -1 INSIDE the host's own `isolate` context puts it above the fill
+   and the border but below every glyph — the pair is load-bearing: without
+   `isolate` a negative z-index escapes to the root context and the frame
+   paints UNDER a translucent fill at a fraction of itself. */
+.spine-frame {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: visible;
+  pointer-events: none;
+}
+/* Rests fully retracted, so a page whose JS never runs shows the section's own
+   static border and nothing else. The bloom is a second, wider, dimmer stroke
+   rather than a drop-shadow: a filter's cached result is invalidated by every
+   stroke-dashoffset change, which would re-run a card-sized filter on every
+   frame of the draw. Brand purple, unless the host asks for teal. */
+.spine-frame-arc {
+  stroke: rgba(168, 86, 251, 0.95);
+  stroke-width: 1.8;
+}
+/* TEMP glow-off — the frame's bloom stroke (both hues).
+.spine-frame-glow {
+  stroke: rgba(168, 86, 251, 0.16);
+  stroke-width: 5;
+}
+*/
+[data-spine-hue="teal"] .spine-frame-arc {
+  stroke: rgba(44, 224, 206, 0.9);
+}
+/* TEMP glow-off:
+[data-spine-hue="teal"] .spine-frame-glow {
+  stroke: rgba(44, 224, 206, 0.13);
+}
+*/
+.spine-frame-arc,
+.spine-frame-glow {
+  stroke-linecap: butt;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-spine-frame].is-lit .spine-frame-arc,
+[data-spine-frame].is-lit .spine-frame-glow {
+  stroke-dashoffset: 0;
+}
+
+/* A border is TWO lines drawn at once — a half released each way from the top
+   centre — so it gets two fronts, one riding each. They are the same mark the
+   trunk's front is, doing the same job: they exist only while the line is
+   being drawn, and they leave with it. Nothing here loops.
+   <Spine> writes each group's `offset-path` from the same half the arcs draw,
+   so a bolt travels exactly the line under it. Travel is `offset-distance`,
+   which animates as a TRANSFORM; a travelling stroke-dasharray would have been
+   fewer elements but repaints the whole card-sized path every frame. */
+.spine-frame-bolt {
+  offset-rotate: 0deg;
+  offset-distance: 0%;
+  opacity: 0;
+}
+/* 900ms and the same easing as the arcs' stroke-dashoffset transition, so the
+   bolt sits ON the growing end of its half rather than racing or trailing it.
+   Two animations, not one with opacity keyframes folded in: intermediate
+   keyframes would re-apply the easing per segment and break that sync. */
+[data-spine-frame].is-lit .spine-frame-bolt {
+  animation:
+    spine-bolt-run 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    spine-bolt-spark 900ms linear forwards;
+}
+@keyframes spine-bolt-run {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+/* Struck as it sets off, gone before it lands: a dot parked at the bottom
+   centre would be a permanent mark on a border that has finished drawing. */
+@keyframes spine-bolt-spark {
+  0% {
+    opacity: 0;
+  }
+  12%,
+  74% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* No offset-path support means a bolt would sit parked at the origin, which
+   reads as a stray dot in the corner. Better to have no bolts at all. */
+@supports not (offset-path: path("M 0 0 L 1 1")) {
+  .spine-frame-bolt {
+    display: none;
+  }
+}
+
+/* --- the timeline's nodes, which sit ON the chain --- */
+.tl-dot {
+  display: block;
+  width: 11px;
+  height: 11px;
+  border-radius: 9999px;
+  border: 1.2px solid var(--border-strong);
+  background: var(--elevated);
+  opacity: 0.6;
+  transform: scale(0.7);
+  transition:
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Timeline prose keeps its own 2rem gutter, while the nodes reach back to the
+   SAME outside rail as the circuit. The max() terms mirror <Section>; the
+   centred max-site offset cancels because both measurements share it. */
+.tl-dot-outer {
+  left: calc(
+    7px - max(1rem, env(safe-area-inset-left)) - 2rem - 5.5px
+  );
+}
+@media (min-width: 768px) {
+  .tl-dot-outer {
+    left: calc(
+      13px - max(2rem, env(safe-area-inset-left)) - 2rem - 5.5px
+    );
+  }
+}
+.tl-dot.is-lit {
+  opacity: 1;
+  transform: scale(1);
+  border-color: transparent;
+  background-image: linear-gradient(135deg, #a856fb 0%, #d33aee 55%, #f45fc4 100%);
+  /* TEMP glow-off: box-shadow: 0 0 22px -6px rgba(211, 58, 238, 0.55); */
+}
+/* History ends at a live "now". */
+.tl-dot-live.is-lit {
+  background-image: none;
+  background-color: var(--accent-teal);
+  /* TEMP glow-off: box-shadow: 0 0 14px rgba(44, 224, 206, 0.6); */
+}
+.tl-dot-live.is-lit::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 9999px;
+  background: rgba(44, 224, 206, 0.4);
+  animation: spine-ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+/* NOTE: no `position` here. The dot is positioned by Timeline.tsx (absolute,
+   in the gutter the chain runs down), and this rule is UNLAYERED — it would
+   beat Tailwind's `absolute` utility and drop the live dot back into flow. */
+.spine-fork-ring {
+  stroke: rgba(201, 169, 255, 0.24);
+}
+
+/* ---------------------------- the hero block ---------------------------- */
+
+/* NOTE: the four --hero-* properties are written by <Spine> on the
+   [data-spine-hero] <section>. They must NOT be re-declared here — a
+   declaration on a descendant beats the inherited value and pins the whole
+   payoff to its resting state. Every consumer below carries its own
+   var(..., 0) fallback, which is what makes the defaults unnecessary. */
+/* A TYPING CARET under the first letter: an underscore that shows up on the
+   empty slot and blinks, so the last word reads as something about to be
+   typed rather than something that simply appeared. It arrives BEFORE the
+   letters (which WordRotate delays behind it) and keeps blinking under the
+   first letter afterwards, the way a terminal cursor sits at a prompt.
+   currentColor, so it can never drift from the word it belongs to. */
+.hero-caret {
+  position: absolute;
+  left: 0.055em;
+  /* Just under the baseline — the word carries 0.12em of descender padding,
+     so that is where the baseline sits inside this box. */
+  bottom: 0.055em;
+  width: 0.44em;
+  height: 0.055em;
+  border-radius: 0.02em;
+  background: currentColor;
+  pointer-events: none;
+  /* 200ms in (after the previous word's 350ms exit is mostly gone), one blink
+     on the empty slot, and the letters land at 1000ms — see LETTER_DELAY_S in
+     WordRotate.tsx, which has to stay behind this. steps(1) because a cursor
+     switches, it does not fade. */
+  animation:
+    hero-caret-in 220ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both,
+    hero-caret-blink 900ms steps(1, end) 420ms infinite;
+}
+@keyframes hero-caret-in {
+  from {
+    opacity: 0;
+    transform: scaleX(0.35);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+@keyframes hero-caret-blink {
+  0%,
+  56% {
+    opacity: 1;
+  }
+  57%,
+  100% {
+    opacity: 0;
+  }
+}
+/* A blink is the whole idea, and there is no static frame of it worth
+   keeping — so under reduced motion the caret is simply there. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-caret {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+[data-spine-hero] {
+  --hero-node-y: 92.5%;
+}
+.hero-node {
+  --hero-node-size: 72px;
+  --hero-node-radius: 36px;
+}
+@media (min-width: 768px) {
+  [data-spine-hero] {
+    --hero-node-y: 70%;
+  }
+  .hero-node {
+    --hero-node-size: 88px;
+    --hero-node-radius: 44px;
+  }
+}
+.hero-node-bloom {
+  top: var(--hero-node-y, 70%);
+}
+
+.hero-node-hit {
+  position: absolute;
+  left: 50%;
+  top: var(--hero-node-y, 70%);
+  width: var(--hero-node-size, 72px);
+  height: var(--hero-node-size, 72px);
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  pointer-events: auto;
+  display: block;
+  isolation: isolate;
+}
+
+/* Material shell: the reference image contributes only the layered glass
+   language. The official vector mark and the existing live scalars remain the
+   actual content, so this stays crisp, cheap and theme-native at every size. */
+.hero-node-glass {
+  z-index: 0;
+  overflow: hidden;
+  border: 1px solid rgba(224, 140, 255, 0.42);
+  border-radius: 9999px;
+  background:
+    radial-gradient(
+      ellipse at 32% 13%,
+      rgba(255, 255, 255, 0.24) 0%,
+      rgba(224, 140, 255, 0.09) 28%,
+      transparent 48%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(168, 86, 251, 0.18),
+      rgba(35, 21, 52, 0.44) 54%,
+      rgba(12, 8, 20, 0.56)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(104, 45, 157, 0.34),
+    inset 0 0 0 3px rgba(201, 169, 255, 0.055);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+  backdrop-filter: blur(10px) saturate(1.15);
+}
+.hero-node-glass::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  z-index: 3;
+  border: 1px solid rgba(244, 234, 255, 0.16);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.hero-node-energy {
+  z-index: 0;
+  transform: scaleY(var(--hero-fill, 0));
+  transform-origin: 50% 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    to top,
+    rgba(44, 224, 206, 0.42),
+    rgba(168, 86, 251, 0.3) 58%,
+    rgba(224, 140, 255, 0.18)
+  );
+  opacity: calc(0.52 + 0.18 * var(--hero-live, 0));
+}
+.hero-node-mark {
+  z-index: 2;
+  overflow: hidden;
+  border-radius: 22%;
+  opacity: calc(0.68 + 0.24 * var(--hero-fill, 0));
+}
+.hero-node-mark-source {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: none;
+}
+.hero-node-specular {
+  z-index: 4;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      ellipse 72% 34% at 50% 7%,
+      rgba(255, 255, 255, 0.24),
+      rgba(224, 140, 255, 0.08) 48%,
+      transparent 72%
+    ),
+    linear-gradient(
+      112deg,
+      transparent 36%,
+      rgba(255, 255, 255, 0.08) 48%,
+      transparent 58%
+    );
+  pointer-events: none;
+}
+
+/* The canonical-warning instrument is the Chain primer lens at a quieter
+   volume: smaller, static and entirely teal. It only occupies the genuine
+   spare corner on wide cards; below that width the warning copy keeps the
+   whole surface. */
+.exchange-warning-node {
+  position: absolute;
+  top: 1.75rem;
+  right: 2.25rem;
+  z-index: 0;
+  display: none;
+  width: 9rem;
+  height: 9rem;
+  pointer-events: none;
+  user-select: none;
+}
+@media (min-width: 1120px) {
+  .exchange-warning-node {
+    display: block;
+  }
+}
+.exchange-warning-node-glass {
+  position: absolute;
+  inset: 5px;
+  overflow: hidden;
+  border: 1px solid rgba(44, 224, 206, 0.38);
+  border-radius: 9999px;
+  background:
+    radial-gradient(
+      ellipse at 33% 14%,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(44, 224, 206, 0.09) 30%,
+      transparent 49%
+    ),
+    radial-gradient(
+      circle at 50% 106%,
+      rgba(44, 224, 206, 0.22),
+      transparent 58%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(44, 224, 206, 0.14),
+      rgba(10, 34, 38, 0.4) 54%,
+      rgba(6, 15, 20, 0.58)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(9, 84, 80, 0.32),
+    inset 0 0 0 3px rgba(44, 224, 206, 0.045);
+  -webkit-backdrop-filter: blur(9px) saturate(1.12);
+  backdrop-filter: blur(9px) saturate(1.12);
+}
+.exchange-warning-node-glass::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  z-index: 3;
+  border: 1px solid rgba(220, 255, 251, 0.13);
+  border-radius: inherit;
+}
+.exchange-warning-node-energy {
+  position: absolute;
+  inset: 46% 0 0;
+  z-index: 0;
+  border-radius: 0 0 9999px 9999px;
+  background: linear-gradient(
+    to top,
+    rgba(44, 224, 206, 0.22),
+    rgba(44, 224, 206, 0.045)
+  );
+}
+.exchange-warning-node-art {
+  position: absolute;
+  inset: 9%;
+  z-index: 2;
+  width: 82%;
+  height: 82%;
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.exchange-warning-node-art-grid {
+  stroke: rgba(44, 224, 206, 0.3);
+  stroke-width: 1.4;
+}
+.exchange-warning-node-art-nodes {
+  fill: rgba(44, 224, 206, 0.1);
+  stroke: rgba(102, 238, 225, 0.78);
+  stroke-width: 2.2;
+}
+.exchange-warning-node-art-flow {
+  fill: none;
+  stroke: rgba(44, 224, 206, 0.68);
+  stroke-width: 2.4;
+}
+.exchange-warning-node-art-check {
+  fill: none;
+  stroke: rgba(236, 255, 253, 0.78);
+  stroke-width: 3;
+}
+.exchange-warning-node-specular {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      ellipse 72% 34% at 50% 7%,
+      rgba(255, 255, 255, 0.2),
+      rgba(44, 224, 206, 0.07) 48%,
+      transparent 72%
+    ),
+    linear-gradient(
+      112deg,
+      transparent 36%,
+      rgba(255, 255, 255, 0.065) 48%,
+      transparent 58%
+    );
+}
+.exchange-warning-node-label {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  z-index: 5;
+  transform: translateX(-50%);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.45rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(132, 244, 233, 0.56);
+}
+.exchange-warning-node-rings {
+  position: relative;
+  z-index: 5;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  stroke: rgba(44, 224, 206, 0.52);
+  stroke-width: 1.2;
+}
+.exchange-warning-node-rings circle:nth-child(2) {
+  stroke: rgba(220, 255, 251, 0.15);
+  stroke-width: 0.8;
+}
+.exchange-warning-node-port {
+  fill: rgba(44, 224, 206, 0.62);
+  stroke: none;
+}
+.hero-ring-svg {
+  position: relative;
+  z-index: 5;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* The ring is an UNMINED BLOCK: it stays hollow, it brightens on approach,
+   and it fills by ARC as the field's energy arrives. Never plug the centre. */
+.hero-ring {
+  stroke: rgba(201, 169, 255, calc(0.52 + 0.34 * var(--hero-charge, 0)));
+  /* One soft bloom so the block reads as the focal point over a busy field,
+     without ever filling its centre. */
+  /* TEMP glow-off: filter: drop-shadow(0 0 7px rgba(168, 86, 251, 0.4)); */
+}
+.hero-breathe {
+  opacity: clamp(0, calc(1 - var(--hero-charge, 0) * 4), 1);
+}
+.hero-breathe circle {
+  animation: hero-breathe 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+@keyframes hero-breathe {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.12;
+  }
+}
+.hero-arc {
+  stroke-dasharray: 146.08;
+  stroke-dashoffset: calc((1 - var(--hero-fill, 0)) * 146.08);
+}
+.hero-arc-soft {
+  stroke: rgba(201, 169, 255, 0.75);
+  opacity: calc(1 - var(--hero-fill, 0));
+}
+.hero-arc-teal {
+  stroke: rgba(44, 224, 206, 0.85);
+  opacity: var(--hero-fill, 0);
+}
+.hero-output-port {
+  stroke: rgba(201, 169, 255, calc(0.28 + 0.5 * var(--hero-fill, 0)));
+  stroke-width: 1.2;
+  fill: rgba(44, 224, 206, calc(0.88 * var(--hero-live, 0)));
+}
+.hero-halo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 112px;
+  height: 112px;
+  margin: -56px 0 0 -56px;
+  border-radius: 9999px;
+  /* TEMP glow-off:
+  background: radial-gradient(
+    circle,
+    rgba(44, 224, 206, 0.5) 0%,
+    transparent 70%
+  );
+  */
+  opacity: calc(0.55 * var(--hero-flash, 0) + 0.3 * var(--hero-live, 0));
+  pointer-events: none;
+}
+.hero-halo-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  border-radius: 9999px;
+  /* TEMP glow-off:
+  background: radial-gradient(
+    circle,
+    rgba(44, 224, 206, 0.45) 0%,
+    transparent 70%
+  );
+  */
+  opacity: 0;
+  pointer-events: none;
+}
+.is-complete .hero-halo-burst {
+  animation: hero-burst 620ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+@keyframes hero-burst {
+  from {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  to {
+    transform: scale(2.33);
+    opacity: 0;
+  }
+}
+/* The chain descender. It runs the WHOLE drop from the block to the hero's
+   bottom edge — where the site-wide spine picks it up on an identical
+   hairline — because the chain exists before you charge it. Same idiom as
+   .spine-seg: a dark rail that is always there, with the lit fill drawn down
+   it by scroll. Scroll LIGHTS the chain; it does not build it. */
+.hero-descender {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--hero-node-y, 70%) + var(--hero-node-radius, 36px));
+  bottom: 0;
+  width: 1.8px;
+  margin-left: -0.9px;
+  /* The gradient runs the WHOLE drop from the first frame — lavender out of
+     the block, settling into brand purple and STAYING there across the hero's
+     edge, where the circuit's ramp picks up on the same purple. It used to
+     land on teal to meet a teal ramp; matching at the boundary was right but
+     the colour was not, and the bottom third of the drop read as a different
+     line from the chain either side of it. Teal is now only ever the moving
+     marks — the glint, the bolt, the head tip — never the wire. */
+  background: linear-gradient(
+    to bottom,
+    rgba(201, 169, 255, 0.26),
+    rgba(168, 86, 251, 0.38) 55%,
+    rgba(168, 86, 251, 0.42)
+  );
+}
+.hero-descender::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* The SAME gradient at full strength, REVEALED top-down by charge rather
+     than scaled into it: a scaled copy would squeeze the whole ramp into the
+     lit stub and fall out of register with the rail underneath. The mask's
+     soft trailing stop is the energy front. */
+  --lit: clamp(0.3, var(--hero-charge, 0), 1);
+  mask-image: linear-gradient(
+    to bottom,
+    #000 calc(var(--lit) * 100% - 7%),
+    transparent calc(var(--lit) * 100%)
+  );
+  background: linear-gradient(
+    to bottom,
+    rgba(201, 169, 255, 0.55),
+    rgba(168, 86, 251, 0.78) 55%,
+    rgba(168, 86, 251, 0.82)
+  );
+}
+/* The glint falls the whole drop at any viewport height: the traveller IS the
+   full-height track and the dot rides its top edge, so translateY(100%) is
+   exactly one descender, with no length hard-coded anywhere. */
+.hero-glint-wrap {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--hero-node-y, 70%) + var(--hero-node-radius, 36px));
+  bottom: 0;
+  width: 0;
+  opacity: clamp(0, calc(1 - var(--hero-charge, 0) * 8), 1);
+}
+.hero-glint {
+  position: absolute;
+  inset: 0;
+  /* Linear, not the site ease: an eased loop reads as a stutter, and a charge
+     travelling a wire has no reason to slow down at the end. */
+  animation: hero-glint 4.2s linear infinite;
+}
+.hero-glint::after {
+  content: "";
+  position: absolute;
+  left: -2.25px;
+  top: 0;
+  width: 4.5px;
+  height: 4.5px;
+  border-radius: 9999px;
+  background: var(--accent-teal);
+  /* TEMP glow-off: box-shadow: 0 0 6px rgba(44, 224, 206, 0.55); */
+}
+@keyframes hero-glint {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  16% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* THE DISCHARGE — what the block does with the field it has just taken.
+   Same full-height track as the glint, so it falls exactly one descender at
+   any viewport height, but it runs ONCE and only when <Spine> says the block
+   went live. Nothing about it is a resting state: with no data-discharge on
+   the hero this whole subtree has no animation and zero opacity. */
+.hero-discharge-wrap {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--hero-node-y, 70%) + var(--hero-node-radius, 36px));
+  bottom: 0;
+  width: 0;
+  pointer-events: none;
+}
+.hero-discharge {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+/* Linear, like the glint: a charge travelling a wire has no reason to ease. */
+[data-discharge] .hero-discharge {
+  animation: hero-discharge-run 760ms linear 1 both;
+}
+@keyframes hero-discharge-run {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+.hero-discharge-core {
+  position: absolute;
+  left: -1.9px;
+  top: 0;
+  width: 3.8px;
+  height: 3.8px;
+  border-radius: 9999px;
+  background: var(--accent-teal);
+}
+/* The same bloom the SVG bolts wear, as a radial background — the paint
+   server they use is inside an <svg> and cannot be referenced from a div. */
+.spine-bolt-halo-css {
+  position: absolute;
+  left: -9px;
+  top: -7px;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(44, 224, 206, 0.5) 0%,
+    rgba(44, 224, 206, 0.17) 45%,
+    rgba(44, 224, 206, 0) 70%
+  );
+}
+
+/* A 640–720px-tall laptop cannot fit the default 192px vertical padding plus
+   the full display stack. Tighten only this opening rhythm so the node, its
+   fill and the post-fill spark remain between the sticky header and the fold. */
+@media (min-width: 768px) and (max-height: 720px) {
+  .hero-node {
+    --hero-node-size: 80px;
+    --hero-node-radius: 40px;
+  }
+  .hero-content {
+    gap: 1rem;
+    padding-block: 2.5rem;
+  }
+  .hero-content .display {
+    font-size: clamp(3.5rem, 7vw, 4.5rem);
+    line-height: 0.92;
+  }
+  .hero-content .body {
+    max-width: 44ch;
+  }
+  .hero-content > .mt-2 {
+    margin-top: 0;
+  }
+}
+
+/* At phone width the two 52px actions otherwise wrap directly into the node's
+   lower anchor. They keep the same target height but trade excess side padding
+   for one stable row, leaving the glass block a clear hand-off below them. */
+@media (max-width: 767px) {
+  .hero-actions {
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+  }
+  .hero-actions > a {
+    padding-inline: 1rem;
+  }
+}
+
+/* Short PHONE viewports — the mobile sibling of the laptop tier above. An
+   in-browser tab (Safari/Chrome bars, or a webview inside Messenger) leaves
+   only ~80-85% of the screen as the small viewport, and at full rhythm the
+   hero copy alone outgrew 100svh, pushing the node at 92.5% below the fold.
+   Tighten rhythm and type until the content fits INSIDE the min-height, so
+   the hero's height stays exactly 100svh - 77px and the node lands on
+   screen. Standalone/PWA displays and tall phones never match this query. */
+@media (max-width: 767px) and (max-height: 780px) {
+  .hero-content {
+    gap: 1rem;
+    padding-block: 3rem 4.5rem;
+  }
+  .hero-content .display {
+    font-size: 2.25rem;
+    line-height: 0.95;
+  }
+  .hero-content .lead {
+    font-size: 0.9375rem;
+  }
+  .hero-content .body {
+    font-size: 0.875rem;
+  }
+  .hero-content > .mt-2 {
+    margin-top: 0;
+  }
+}
+/* The shortest tier (SE-class phones and heavily-chromed webviews). */
+@media (max-width: 767px) and (max-height: 640px) {
+  .hero-content {
+    gap: 0.75rem;
+    padding-block: 2.25rem 4rem;
+  }
+  .hero-content .display {
+    font-size: 2rem;
+  }
+  .hero-content .lead {
+    font-size: 0.875rem;
+  }
+  .hero-content .body {
+    font-size: 0.8125rem;
+  }
+  .hero-node {
+    --hero-node-size: 64px;
+    --hero-node-radius: 32px;
+  }
+}
+
+/* The live-stat numerals must never escape their spine boxes. The band's
+   sizes are measured against each grid shape (see StatsBand), but a webview
+   with boosted text or a future longer numeral can still exceed the narrow
+   two-column cells. Sizing each cell as a container and capping the numeral
+   at a fraction of the cell's own width makes overflow impossible: at the
+   design sizes the cap sits exactly at the measured fit, so it only bites
+   when something would have spilled. Scoped below sm — from sm up the
+   tracks have slack, and the lg flex band sizes cells BY content, where
+   inline-size containment would collapse them. */
+@media (max-width: 639px) {
+  @supports (container-type: inline-size) {
+    [data-spine-cell] {
+      container-type: inline-size;
+    }
+    [data-spine-cell] dd {
+      font-size: min(1.5rem, 15cqw);
+    }
+  }
+}
+
+@layer components {
+  /* ------------------------------ THE LIT EDGE ---------------------------
+     What replaced the margin rail on inner pages.
+
+     Two primitives. `rise`: a block arrives. `edge`: the hairline it sits on
+     lights up under it, in .spine-tick's ink, at .spine-tick's weight, on
+     .spine-tick's curve — literally the same declaration, relocated from the
+     gutter into the content column. The dark border is NEVER removed; the lit
+     copy is an aria-hidden overlay on top of it. So the no-JS state, the
+     reduced-motion state and the forced-colors state are all byte-identical to
+     what this site rendered before the edge existed.
+
+     Nothing here is ever 1.8px. 1.8 is THE CHAIN and stays home-only; 1.2 is a
+     reference off the chain, and every mark here is a reference.
+     Nothing here is teal. Teal means a value that moves; this moves only
+     because you scrolled. */
+
+  /* --reveal-delay is RESOLVED where it is declared — a child inherits the
+     computed milliseconds, not the formula — so the calc has to be repeated on
+     the item, or every item in a stagger would inherit the group's own 0ms and
+     land together.
+     --reveal-step is deliberately NOT repeated: the group carries it (from the
+     `stagger` prop, as an inline custom property) and the items inherit it. A
+     declaration here would beat that inherited value and quietly pin every
+     group back to 70ms. */
+  [data-reveal] {
+    --reveal-i: 0;
+    --reveal-step: 70ms;
+    --reveal-delay: calc(var(--reveal-i) * var(--reveal-step));
+  }
+  [data-reveal-item] {
+    --reveal-i: 0;
+    /* Fallbacks inside the calc, so an item that somehow renders outside a
+       group resolves to 0ms rather than to an invalid value — which would take
+       the whole `transition` shorthand down with it. */
+    --reveal-delay: calc(var(--reveal-i, 0) * var(--reveal-step, 70ms));
+  }
+  /* Stagger is pure CSS. The group is observed once; the items key off it. */
+  [data-reveal-group] > [data-reveal-item]:nth-child(1) { --reveal-i: 0; }
+  [data-reveal-group] > [data-reveal-item]:nth-child(2) { --reveal-i: 1; }
+  [data-reveal-group] > [data-reveal-item]:nth-child(3) { --reveal-i: 2; }
+  [data-reveal-group] > [data-reveal-item]:nth-child(4) { --reveal-i: 3; }
+  [data-reveal-group] > [data-reveal-item]:nth-child(5) { --reveal-i: 4; }
+  [data-reveal-group] > [data-reveal-item]:nth-child(6) { --reveal-i: 5; }
+  /* Capped at 6: past ~420ms a stagger stops reading as a sequence and starts
+     reading as a queue of things that have not arrived. */
+  [data-reveal-group] > [data-reveal-item]:nth-child(n + 7) { --reveal-i: 6; }
+
+  /* ARMING lives entirely inside no-preference. The global reduced-motion
+     block sets transition-duration: .01ms !important, which would strand
+     anything parked at opacity 0 — so reduced motion must never be able to
+     see a hiding rule at all, not merely flatten its transition. */
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal].is-armed,
+    [data-reveal-group].is-armed > [data-reveal-item] {
+      opacity: 0;
+      transform: translate3d(0, 12px, 0);
+    }
+    [data-reveal].is-armed.is-in,
+    [data-reveal-group].is-armed.is-in > [data-reveal-item] {
+      opacity: 1;
+      transform: none;
+      transition:
+        opacity 460ms cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay),
+        transform 460ms cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay);
+    }
+    /* Tab into a still-armed block and it reveals, in CSS, with no listener.
+       An opacity:0 element is still focusable and still announced; without
+       this a fast Tab parks focus on something invisible. Not optional. */
+    [data-reveal].is-armed:focus-within {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    [data-reveal-group].is-armed:focus-within > [data-reveal-item] {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
+  /* --- the edge: .spine-tick's declaration, relocated ---
+     The geometry here is a DEFAULT, not a instruction: every one of these
+     declarations is meant to lose to a Tailwind utility on the same element
+     (staking's edge is its existing `left-4 top-4 bottom-8 w-px` gradient div
+     and must stay exactly where it is). Utilities are emitted after this
+     layer, so an equal-specificity utility wins on source order — which is why
+     the axis switch is written `:where([data-axis="y"])`, to keep it at one
+     class of specificity instead of two. */
+  [data-edge] {
+    position: absolute;
+    top: -1.2px;
+    left: 0;
+    width: var(--edge-len, 42%);
+    height: 1.2px;
+    background: linear-gradient(
+      to right,
+      rgba(201, 169, 255, 0.32),
+      rgba(201, 169, 255, 0)
+    );
+    transform: scale3d(0, 1, 1);
+    transform-origin: var(--edge-origin, left);
+    pointer-events: none;
+  }
+  [data-edge]:where([data-axis="y"]) {
+    top: 0;
+    left: 0;
+    width: 1.2px;
+    /* No fallback ON PURPOSE. With no --edge-len the declaration is invalid at
+       computed-value time and height falls back to `auto`, so an edge sized by
+       a top/bottom pair (staking's rail) keeps that pair. Give it --edge-len
+       and it is sized by that instead. */
+    height: var(--edge-len);
+    background: linear-gradient(
+      to bottom,
+      rgba(201, 169, 255, 0.32),
+      rgba(201, 169, 255, 0)
+    );
+    transform: scale3d(1, 0, 1);
+    transform-origin: var(--edge-origin, top);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal].is-in [data-edge],
+    [data-reveal-group].is-in [data-edge] {
+      transform: none;
+      transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1)
+        calc(60ms + var(--reveal-delay, 0ms));
+    }
+    /* The staking rail is longer than a tick and draws at its own pace. */
+    [data-edge][data-axis="y"] {
+      --edge-draw: 700ms;
+    }
+    [data-reveal].is-in [data-edge][data-axis="y"],
+    [data-reveal-group].is-in [data-edge][data-axis="y"] {
+      transition: transform var(--edge-draw) cubic-bezier(0.22, 1, 0.36, 1) 60ms;
+    }
+  }
+  /* Reduced motion never arms, so [data-edge] never receives .is-in and rests
+     at scale 0 — invisible, with the underlying border showing alone. That is
+     the page exactly as it renders today. Deliberate: the alternative (drawing
+     them statically) would give reduced-motion users marks nobody asked for. */
+
+  /* --- staking's step numerals: the gradient of .tl-dot.is-lit, WITHOUT the
+     class. <Spine> writes .is-lit onto .tl-dot elements; borrowing that class
+     here would collide with it. --- */
+  .step-num {
+    border-color: var(--border-strong);
+    background-color: var(--elevated);
+    background-image: none;
+    transition:
+      border-color 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-image 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal-group].is-in [data-reveal-item] .step-num {
+      border-color: transparent;
+      background-image: linear-gradient(
+        135deg,
+        #a856fb 0%,
+        #d33aee 55%,
+        #f45fc4 100%
+      );
+      transition-delay: var(--reveal-delay);
+    }
+  }
+
+  /* --- typography defaults (task 5). .h3/.h4 are always text-on-surface —
+     14 occurrences of "h4 text-on-surface", zero exceptions — and .label-caps
+     is text-on-surface-variant in 27 of 36. Baking them removes ~45
+     repetitions and makes the four remaining overrides MEAN something:
+     text-teal-soft = live, text-outline = ordinal/meta, text-accent-soft =
+     actionable. These are @layer components, so a Tailwind utility on the
+     element still wins. --- */
+  .h3,
+  .h4 {
+    @apply text-balance text-on-surface;
+  }
+  .label-caps {
+    @apply text-on-surface-variant;
+  }
+}
+
+/* High-contrast mode gets none of this ornament. The card frame is NOT in the
+   overlay — it lives inside the card so it can paint above its fill — so it
+   has to be named here too or forced colours would draw it in the system
+   foreground, as a second border around a card that already has one. */
+@media (forced-colors: active) {
+  .spine,
+  .spine-frame,
+  .exchange-warning-node {
+    display: none;
+  }
+
+  /* The edge is a background gradient and forced colours drops backgrounds, so
+     it would vanish anyway — but say so, so nobody has to work that out. The
+     border-t underneath is a real border and survives as a system colour: the
+     failure mode is the fallback. */
+  [data-edge] {
+    display: none;
+  }
+  [data-spine-news-card] > .glass-card::before {
+    display: none;
+  }
+  /* opacity/transform are not colours and forced colours does not touch them,
+     but a stalled runtime must never be able to leave content invisible in the
+     one mode where a user cannot work around it. */
+  [data-reveal],
+  [data-reveal-item] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .step-num {
+    background-image: none;
+  }
+  /* The primer illustration is decorative and built from translucent fills.
+     Remove that entire column instead of presenting a broken system-colour
+     drawing; the complete explanation and all three controls remain. */
+  .page-hero-visual {
+    display: none;
+  }
+  .page-hero-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  /* Every drawing on The Chain is made of backgrounds and strokes, and forced
+     colours drops both. Rather than hope a stroke happens to map onto a system
+     colour, each visual is wrapped in .viz with an sr-only .viz-fallback
+     sibling holding the same information as a <dl> or a short <table>. Here
+     the drawing goes and the table arrives. It is the one fallback that cannot
+     be wrong, because it is the data the picture was always describing. */
+  .viz {
+    display: none;
+  }
+  .viz-fallback {
+    position: static;
+    width: auto;
+    height: auto;
+    clip: auto;
+    clip-path: none;
+    white-space: normal;
+  }
+
+  /* The drawing is translucent fills and hairline strokes, and forced colours
+     drops both. `.viz` sits on the drawing's wrapper rather than on the
+     <figure>, so the drawing goes and the figure's sr-only name, the caption
+     list, the figcaption and the .viz-fallback table all stay. The classes
+     below are already inside a display:none subtree; they are named as a
+     second line of defence, because if `.viz` is ever moved again the strokes
+     are the part that would paint a system colour across an empty box.
+     `.dag-edge` is also required here by chain-page.test.mjs. */
+  .dag-edge,
+  .dag-head,
+  .dag-lane,
+  .dag-rule,
+  .dag-ghost,
+  .dag-ghost-x,
+  .dag-token,
+  .dag-stub,
+  .dag-band {
+    display: none;
+  }
+  /* With the drawing gone the beats stop being beats. Un-stack the captions
+     into the list they rest as, light every one of them, and remove a
+     transport that now has nothing to transport. */
+  .dag-caption-list {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+  .dag-caption {
+    opacity: 1 !important;
+  }
+  .dag-transport {
+    display: none;
+  }
+}
+
+/* A printed page must never come out blank because an observer had not fired. */
+@media print {
+  [data-reveal],
+  [data-reveal-item] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  [data-edge] {
+    display: none;
+  }
+  /* Print does not match prefers-reduced-motion, so without this a printed
+     page would catch the schematic's caption stack mid-beat and print one of
+     six. Un-stack them into the list they rest as, and drop a transport
+     nobody can press on paper. */
+  .dag-caption-list {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+  .dag-caption {
+    opacity: 1 !important;
+  }
+  .dag-transport {
+    display: none;
+  }
+  /* Closed <details> suppress their content in print, so a printed FAQ would
+     carry nine questions and zero answers. Force the content visible (the
+     ::details-content pseudo is ignored harmlessly by engines that predate
+     it) and drop the chevron nobody can press on paper. */
+  details:not([open])::details-content {
+    content-visibility: visible;
+  }
+  summary svg {
+    display: none;
+  }
+}
+
+/* Mechanical / precise motion: respect reduced motion (DESIGN.md doctrine). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  /* The travelling charges are motion with no static state worth keeping — the
+     rule above would land each one parked at the end of its lap, which is just
+     a stray dot on the border. The drawn frame already says everything. */
+  .spine-frame-bolt,
+  .spine-circuit-front,
+  .spine-arm-front {
+    display: none;
+  }
+}
+
+/* --------------------------- Chain opening primer -------------------------
+   A larger sibling of the home hero node: circular layered glass, a double
+   rim, top-left specular light and a purple instrument drawing. These are
+   concepts, not live telemetry, so teal stays out of the artwork. */
+.page-hero-visual {
+  isolation: isolate;
+}
+.page-hero-orb {
+  border: 1px solid rgba(224, 140, 255, 0.42);
+  border-radius: 9999px;
+  background:
+    radial-gradient(
+      ellipse at 32% 12%,
+      rgba(255, 255, 255, 0.24) 0%,
+      rgba(224, 140, 255, 0.1) 26%,
+      transparent 48%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(168, 86, 251, 0.2),
+      rgba(35, 21, 52, 0.5) 52%,
+      rgba(12, 8, 20, 0.68)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(104, 45, 157, 0.34),
+    inset 0 0 0 5px rgba(201, 169, 255, 0.045),
+    0 24px 64px -38px rgba(211, 58, 238, 0.68);
+  -webkit-backdrop-filter: blur(16px) saturate(1.18);
+  backdrop-filter: blur(16px) saturate(1.18);
+}
+.page-hero-orb::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  z-index: 4;
+  border: 1px solid rgba(244, 234, 255, 0.16);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.page-hero-orb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      ellipse 72% 32% at 50% 7%,
+      rgba(255, 255, 255, 0.2),
+      rgba(224, 140, 255, 0.06) 52%,
+      transparent 74%
+    ),
+    linear-gradient(
+      112deg,
+      transparent 38%,
+      rgba(255, 255, 255, 0.075) 49%,
+      transparent 59%
+    );
+  pointer-events: none;
+}
+.page-hero-orb-bloom {
+  position: absolute;
+  inset: 20%;
+  z-index: 0;
+  border-radius: 9999px;
+  background: rgba(168, 86, 251, 0.12);
+  filter: blur(34px);
+}
+.page-hero-art {
+  position: absolute;
+  inset: 8%;
+  z-index: 2;
+  width: 84%;
+  height: 84%;
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.page-hero-art-grid {
+  stroke: rgba(201, 169, 255, 0.32);
+  stroke-width: 1.4;
+}
+.page-hero-art-nodes {
+  fill: rgba(168, 86, 251, 0.13);
+  stroke: rgba(224, 140, 255, 0.82);
+  stroke-width: 2.2;
+}
+.page-hero-art-flow {
+  fill: none;
+  stroke: rgba(244, 95, 196, 0.68);
+  stroke-width: 2.4;
+}
+.page-hero-art-code {
+  fill: none;
+  stroke: rgba(236, 233, 243, 0.78);
+  stroke-width: 3;
+}
+.page-hero-art-rays {
+  fill: none;
+  stroke: rgba(224, 140, 255, 0.42);
+  stroke-width: 2;
+  stroke-dasharray: 3 7;
+}
+.page-hero-art-ticks {
+  fill: none;
+  stroke: rgba(201, 169, 255, 0.58);
+  stroke-width: 2;
+}
+.page-hero-orb-label {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  z-index: 5;
+  transform: translateX(-50%);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.625rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(201, 169, 255, 0.62);
+}
+
+@media (max-width: 639px) {
+  .page-hero-visual {
+    width: min(82vw, 20rem);
+    justify-self: center;
+  }
+}
+
+@layer components {
+  /* ------------------------ DAG + EVM, in six beats -----------------------
+     Styles for <DagSchematic>, which teaches itself one beat at a time while a
+     caption underneath says what is happening right now.
+
+     PURPLE THROUGHOUT, deliberately. Teal means a value that moves, and
+     nothing in this figure was measured: the public RPC returns one parentHash
+     per block, so the multi-parent structure cannot be read off the chain.
+     Colour is what keeps a drawing beside live numerals from reading as
+     telemetry.
+
+     THREE INDEPENDENT LOCKS ON REDUCED MOTION, and they are construction
+     rather than promise.
+       1. JS. The component returns before writing any attribute when
+          useReducedMotion() is not false, so `data-step` is never written.
+       2. CSS. Every declaration below that can hide, dim, offset or dash
+          anything sits inside the no-preference guard AND behind
+          `[data-step]`. A reduced-motion browser evaluates neither.
+       3. KEYFRAMES. Every keyframe's 100% frame is byte-identical to its
+          element's base rule. So even with locks 1 and 2 removed, the global
+          kill block further down this file (which collapses duration to
+          0.01ms and iteration-count to 1 while leaving animation-name and
+          animation-fill-mode alone) lands every element on its resting state
+          as a no-op rather than stranding it on a last frame. There is no
+          state in this drawing that only the animation can reach.
+
+     THE GHOST EDGE IS A MARK, NOT A GESTURE. Acyclicity is a negative claim
+     about paths, so the one edge that cannot exist is drawn with a real gap
+     and a cross through the gap rather than as a dash pattern that fades in.
+     It had to survive stillness, and a dasharray at rest would have broken
+     lock 3. */
+  /* The operator between the primer's three layer pills. Muted on purpose:
+     it is the quietest thing in the control, because the pills are what a
+     reader acts on and the plus only has to say they add up. */
+  .primer-plus {
+    position: absolute;
+    top: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translate(-50%, -50%);
+    color: rgba(201, 169, 255, 0.55);
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 0.8125rem;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .dag-figure {
+    --dag-in: 380ms; /* one element's fade */
+    --dag-trace: 560ms; /* one path's draw */
+    --dag-walk: 2400ms; /* the acyclic token's traversal */
+    --dag-fade: 420ms; /* one caption's crossfade */
+    --dag-cycle: 7.5s; /* the only loop */
+  }
+  /* One column on a phone, which is where the switching caption belongs:
+     directly under the drawing, which is what it narrates. Two on a desktop,
+     because a 560px drawing alone in a 1376px column read as a figure left in
+     the corner, and because putting the narration beside the picture also
+     removes the eye travel down and back on every beat. The drawing keeps its
+     own 35rem cap either way, so it never blows past 1:1. */
+  .dag-layout {
+    display: grid;
+    gap: 2rem;
+  }
+  .dag-narration {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  @media (min-width: 1024px) {
+    /* The graph and the order sit side by side, which is also the sentence:
+       many parents on the left, one order on the right. Centred against each
+       other because the two viewBoxes are different heights (300 and 200) and
+       aligning their tops would hang the shorter one in space. */
+    .dag-layout {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: center;
+      gap: 3rem;
+    }
+  }
+  .dag-svg {
+    overflow: visible;
+  }
+  .dag-svg text {
+    font-family: var(--font-mono), ui-monospace, monospace;
+  }
+
+  /* #8b819e is --on-surface-muted, the AA register. NOT #6E6385, which the
+     token comment at the top of this file retires for text and keeps "for
+     borders and hairlines, which is what its name says". Nothing in this
+     drawing is text below 20 viewBox units; any string that cannot meet that
+     lives in HTML instead, which is what removed the old phone scroll floor. */
+  .dag-caps {
+    fill: #8b819e;
+    font-size: 20px;
+    letter-spacing: 2px;
+  }
+  .dag-caps.is-mid {
+    text-anchor: middle;
+  }
+  .dag-rule {
+    fill: none;
+    stroke: rgba(168, 86, 251, 0.22);
+    stroke-width: 1;
+  }
+  .dag-band {
+    fill: rgba(168, 86, 251, 0.05);
+  }
+
+  .dag-node {
+    fill: rgba(168, 86, 251, 0.07);
+    stroke: rgba(201, 169, 255, 0.52);
+    stroke-width: 1.6;
+  }
+  /* The two blocks that name two parents. A lit rim, never a fill. */
+  .dag-node.is-ref {
+    stroke: rgba(224, 140, 255, 0.9);
+    stroke-width: 2.2;
+  }
+  .dag-node-id {
+    fill: rgba(244, 234, 255, 0.88);
+    font-size: 28px;
+    text-anchor: middle;
+  }
+  .dag-stub {
+    fill: none;
+    stroke: url(#dag-stub-fade);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+
+  .dag-edge {
+    fill: none;
+    stroke: rgba(168, 86, 251, 0.5);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .dag-edge.is-cross {
+    stroke: rgba(224, 140, 255, 0.85);
+    stroke-width: 1.8;
+  }
+  .dag-head {
+    fill: none;
+    stroke: rgba(201, 169, 255, 0.85);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .dag-head.is-cross {
+    stroke: rgba(224, 140, 255, 0.95);
+  }
+  .dag-ghost {
+    fill: none;
+    stroke: rgba(201, 169, 255, 0.3);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .dag-ghost-x {
+    fill: none;
+    stroke: rgba(224, 140, 255, 0.85);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+  }
+  /* Rests as a hollow ring on C, which reads as "start here", so even the one
+     element that exists for motion carries a true static meaning. */
+  .dag-token {
+    fill: none;
+    stroke: rgba(224, 140, 255, 0.9);
+    stroke-width: 2;
+    transform-box: view-box;
+  }
+
+  .dag-lane {
+    fill: none;
+    stroke: rgba(201, 169, 255, 0.45);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .dag-slot {
+    fill: rgba(168, 86, 251, 0.06);
+    stroke: rgba(201, 169, 255, 0.45);
+    stroke-width: 1.4;
+  }
+  .dag-slot-id {
+    fill: rgba(244, 234, 255, 0.86);
+    font-size: 26px;
+    text-anchor: middle;
+  }
+  .dag-chip {
+    fill: rgba(168, 86, 251, 0.06);
+    stroke: rgba(201, 169, 255, 0.5);
+    stroke-width: 1.4;
+  }
+  .dag-chip-label {
+    fill: rgba(244, 234, 255, 0.82);
+    font-size: 20px;
+    text-anchor: middle;
+  }
+  .dag-engine-body {
+    fill: rgba(168, 86, 251, 0.1);
+    stroke: rgba(224, 140, 255, 0.75);
+    stroke-width: 2.2;
+  }
+  .dag-engine-label {
+    fill: rgba(244, 234, 255, 0.9);
+    font-size: 26px;
+    letter-spacing: 1px;
+    text-anchor: middle;
+  }
+
+  /* THE CAPTION LIST AT REST: a plain numbered list, all six items, always.
+     This is what a reduced-motion reader, a printed page, a failed chunk and
+     a forced-colours reader all get, and it is the textbook form of this
+     material rather than a degraded copy of something better. */
+  .dag-caption-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+  .dag-caption {
+    display: grid;
+    grid-template-columns: 1.75rem 1fr;
+    column-gap: 0.75rem;
+    row-gap: 0.25rem;
+    align-items: baseline;
+  }
+  .dag-caption-n {
+    grid-column: 1;
+  }
+  .dag-caption-label {
+    grid-column: 2;
+  }
+  .dag-caption-body {
+    grid-column: 2;
+  }
+
+  .dag-transport {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .dag-transport-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .dag-btn {
+    display: inline-flex;
+    min-height: 44px;
+    min-width: 44px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1px solid var(--border);
+    padding: 0 1rem;
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--on-surface);
+    transition:
+      border-color 200ms ease,
+      color 200ms ease;
+  }
+  .dag-btn:hover:not(:disabled) {
+    border-color: rgba(224, 140, 255, 0.6);
+    color: rgba(244, 234, 255, 0.95);
+  }
+  .dag-btn:disabled {
+    color: #8b819e;
+    cursor: not-allowed;
+  }
+  .dag-step-count {
+    margin-left: auto;
+  }
+  .dag-rail {
+    display: flex;
+    min-width: 0;
+    gap: 0.25rem;
+  }
+  .dag-rail-seg {
+    position: relative;
+    height: 3px;
+    flex: 1 1 0;
+    overflow: hidden;
+    border-radius: 9999px;
+    background: rgba(168, 86, 251, 0.16);
+  }
+  /* A beat already passed stays filled; the current one is swept by the
+     animation below, on the same duration the JS timer is using. */
+  .dag-rail-seg[data-reached]:not([data-on]) {
+    background: rgba(201, 169, 255, 0.55);
+  }
+  .dag-rail-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(224, 140, 255, 0.85);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* A chapter. `--i` staggers marks inside one beat. A beat that has not
+       arrived is the only thing in this figure that is ever transparent. */
+    .dag-ch {
+      transition: opacity var(--dag-in) cubic-bezier(0.22, 1, 0.36, 1)
+        calc(var(--i, 0) * 110ms);
+    }
+    /* A beat that has not arrived is GHOSTED, not deleted. The drawing is
+       three stacked bands and the later two are most of its height, so hiding
+       them outright left a void under the graph for the first four beats that
+       read as a broken figure rather than as a lesson in progress. At 0.07 the
+       shape of what is coming is legible as texture, nothing in it can be
+       read, and the reserved height stops making the page look empty. The
+       drawing still never reflows, which is the reason the height was reserved
+       in the first place. */
+    .dag-ch[data-state="future"] {
+      opacity: 0.07;
+      transition-delay: 0s;
+    }
+
+    /* Lines DRAW rather than fade. A line that appears whole says nothing
+       about direction, and direction is the entire point of a DAG. Every path
+       carries pathLength="1" in the markup, so a short lane and a long bracket
+       take the same window. */
+    .dag-ch[data-state="now"] .dag-edge,
+    .dag-ch[data-state="now"] .dag-lane,
+    .dag-ch[data-state="now"] .dag-ghost,
+    .dag-ch[data-state="now"] .dag-stub {
+      animation: dag-draw var(--dag-trace) cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: calc(var(--i, 0) * 110ms);
+    }
+    .dag-ch[data-state="now"] .dag-head {
+      animation: dag-pop var(--dag-in) cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: calc(var(--i, 0) * 110ms);
+    }
+    /* Linear, because a traversal at constant speed is what "follow the edge"
+       means. */
+    .dag-ch[data-state="now"] .dag-token {
+      animation: dag-walk var(--dag-walk) linear 200ms both;
+    }
+
+    /* The one loop, and it is a colour change on a machine attached to no
+       value. It only ever starts once the reader has reached the beat the
+       machine is in. */
+    .dag-figure[data-step="6"] .dag-engine-body {
+      animation: dag-fill var(--dag-cycle) linear infinite;
+      animation-delay: 1.4s;
+    }
+
+    /* THE SWITCHING CAPTION. All six stay in the DOM and in the accessibility
+       tree; they share ONE grid cell, so the row is sized by the tallest of
+       them and advancing a beat never moves the page a pixel. The single
+       `opacity: 0` here is the only hiding declaration in the whole figure,
+       and it sits behind this guard AND behind [data-step]. */
+    .dag-figure[data-step] .dag-caption-list {
+      display: grid;
+      grid-template-areas: "cap";
+      gap: 0;
+    }
+    .dag-figure[data-step] .dag-caption {
+      grid-area: cap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--dag-fade) cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .dag-figure[data-step="1"] .dag-caption[data-on="1"],
+    .dag-figure[data-step="2"] .dag-caption[data-on="2"],
+    .dag-figure[data-step="3"] .dag-caption[data-on="3"],
+    .dag-figure[data-step="4"] .dag-caption[data-on="4"],
+    .dag-figure[data-step="5"] .dag-caption[data-on="5"],
+    .dag-figure[data-step="6"] .dag-caption[data-on="6"] {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* The rail sweeps on the same duration the timer is counting, handed in
+       inline, so the readout and the clock cannot drift. */
+    .dag-rail-fill {
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+    .dag-figure[data-playing="on"] .dag-rail-seg[data-on] .dag-rail-fill {
+      animation: dag-sweep var(--dag-beat, 4600ms) linear both;
+    }
+  }
+
+  @keyframes dag-draw {
+    from {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      opacity: 0;
+    }
+    14% {
+      opacity: 1;
+    }
+    to {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+  @keyframes dag-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.62);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  /* The walk out of C: back along an edge to A, then out along the stub and
+     away, because following the edges never brings you back. It returns to
+     rest on C, which is its base position. */
+  @keyframes dag-walk {
+    0%,
+    8% {
+      transform: none;
+      opacity: 1;
+    }
+    46% {
+      transform: translate(-179px, -43px);
+      opacity: 1;
+    }
+    56% {
+      transform: translate(-210px, -50px);
+      opacity: 1;
+    }
+    84% {
+      transform: translate(-262px, -50px);
+      opacity: 0;
+    }
+    99% {
+      transform: none;
+      opacity: 0;
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes dag-sweep {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+  /* MUST stay the last rule in this block: chain-page.test.mjs slices the
+     comment-stripped stylesheet from `.dag-figure` to `@keyframes dag-fill`
+     and checks that slice for teal, for the retired text token, and for any
+     hiding declaration outside the reduced-motion guard. */
+  @keyframes dag-fill {
+    0%,
+    4%,
+    14%,
+    100% {
+      fill: rgba(168, 86, 251, 0.1);
+    }
+    8%,
+    10% {
+      fill: rgba(168, 86, 251, 0.28);
+    }
+  }
+}
+
+/* --- the participation hub -----------------------------------------------
+   The hero's block one size down, where the stake/build arms converge. It has
+   no charge, no fill and no discharge — <Spine> flips `is-lit` when both arms
+   land and everything below is a transition, so it costs nothing per frame. */
+.hub-node-row {
+  /* The pair stacks below lg, and geometry.ts's fork gate needs their centres
+     more than 40px apart — so there are no arms to converge here and the node
+     would be a disconnected dot. It fails closed with the route it belongs to. */
+  display: none;
+  justify-content: center;
+  /* Room for the two diagonals to read as diagonals. Below the pair's own
+     gap this would look like a dropped full stop rather than a junction, and
+     at 2.75rem the arms came in so shallow that the junction felt cramped
+     against the cards. */
+  margin-top: 4.5rem;
+  margin-bottom: 0.5rem;
+}
+@media (min-width: 1024px) {
+  .hub-node-row {
+    display: flex;
+  }
+}
+.hub-node {
+  position: relative;
+  display: block;
+  width: 60px;
+  height: 60px;
+  isolation: isolate;
+}
+@media (min-width: 640px) {
+  .hub-node {
+    width: 72px;
+    height: 72px;
+  }
+}
+.hub-node-glass {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border: 1px solid rgba(224, 140, 255, 0.34);
+  border-radius: 9999px;
+  background:
+    radial-gradient(
+      ellipse at 32% 13%,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(224, 140, 255, 0.08) 28%,
+      transparent 48%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(168, 86, 251, 0.16),
+      rgba(35, 21, 52, 0.44) 54%,
+      rgba(12, 8, 20, 0.56)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(104, 45, 157, 0.3);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+  backdrop-filter: blur(10px) saturate(1.15);
+  transition:
+    border-color 460ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 460ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hub-node-energy {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    to top,
+    rgba(44, 224, 206, 0.34),
+    rgba(168, 86, 251, 0.26) 58%,
+    rgba(224, 140, 255, 0.14)
+  );
+  opacity: 0;
+  transition: opacity 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hub-node-mark {
+  position: absolute;
+  inset: 25%;
+  z-index: 2;
+  overflow: hidden;
+  border-radius: 22%;
+  opacity: 0.6;
+  transition: opacity 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hub-node-specular {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  background: linear-gradient(
+    148deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    transparent 34%
+  );
+  pointer-events: none;
+}
+.hub-ring-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* Hollow, like the hero's: a filled disc is a mined block. */
+.hub-ring {
+  stroke: rgba(201, 169, 255, 0.5);
+  transition: stroke 460ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* …and lit, once both arms have landed on the rim. */
+.hub-node.is-lit .hub-node-glass {
+  border-color: rgba(224, 140, 255, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(104, 45, 157, 0.36),
+    0 0 22px -4px rgba(168, 86, 251, 0.5);
+}
+.hub-node.is-lit .hub-node-energy {
+  opacity: 0.75;
+}
+.hub-node.is-lit .hub-node-mark {
+  opacity: 0.92;
+}
+.hub-node.is-lit .hub-ring {
+  stroke: rgba(224, 140, 255, 0.9);
+}
+/* Nothing here may animate for someone who asked for stillness; the lit state
+   is still applied, it just arrives already settled. */
+@media (prefers-reduced-motion: reduce) {
+  .hub-node-glass,
+  .hub-node-energy,
+  .hub-node-mark,
+  .hub-ring {
+    transition: none;
+  }
+}

@@ -1,0 +1,934 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Private BlockDAG Community news-asset foundation with environment-gated processing and moderation identities.",
+  "Parameters": {
+    "Environment": {
+      "Type": "String",
+      "AllowedValues": [
+        "development",
+        "production"
+      ],
+      "Description": "The isolated asset environment created by this stack."
+    },
+    "EnableProcessorResources": {
+      "Type": "String",
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Default": "false",
+      "Description": "Create the isolated moderator identity, processor, logs, and failure queue for this environment."
+    },
+    "ProcessorCodeBucket": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Private S3 bucket containing the processor package."
+    },
+    "ProcessorCodeKey": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Exact S3 key of the processor package."
+    },
+    "ProcessorCodeVersion": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Immutable S3 version of the processor package."
+    },
+    "EnableProcessorNotification": {
+      "Type": "String",
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Default": "false",
+      "Description": "Enable the S3 notification after this environment's processor permission exists."
+    },
+    "AssetDeliveryDistributionArn": {
+      "Type": "String",
+      "Default": "",
+      "AllowedPattern": "^$|^arn:(aws|aws-us-gov|aws-cn):cloudfront::[0-9]{12}:distribution/[A-Z0-9]+$",
+      "Description": "Exact CloudFront distribution ARN allowed to read published objects."
+    }
+  },
+  "Rules": {
+    "EnabledProcessorPackageRequired": {
+      "RuleCondition": {
+        "Fn::Equals": [
+          {
+            "Ref": "EnableProcessorResources"
+          },
+          "true"
+        ]
+      },
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Equals": [
+                  {
+                    "Ref": "ProcessorCodeBucket"
+                  },
+                  ""
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "An enabled processor requires the private processor-code bucket."
+        },
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Equals": [
+                  {
+                    "Ref": "ProcessorCodeKey"
+                  },
+                  ""
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "An enabled processor requires the exact processor-code key."
+        },
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Equals": [
+                  {
+                    "Ref": "ProcessorCodeVersion"
+                  },
+                  ""
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "An enabled processor requires an immutable processor-code version."
+        }
+      ]
+    },
+    "ProcessorNotificationRequiresResources": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Or": [
+              {
+                "Fn::Equals": [
+                  {
+                    "Ref": "EnableProcessorNotification"
+                  },
+                  "false"
+                ]
+              },
+              {
+                "Fn::Equals": [
+                  {
+                    "Ref": "EnableProcessorResources"
+                  },
+                  "true"
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "Processor notifications require the environment processor resources."
+        }
+      ]
+    }
+  },
+  "Conditions": {
+    "IsDevelopment": {
+      "Fn::Equals": [
+        {
+          "Ref": "Environment"
+        },
+        "development"
+      ]
+    },
+    "ProcessorResourcesEnabled": {
+      "Fn::Equals": [
+        {
+          "Ref": "EnableProcessorResources"
+        },
+        "true"
+      ]
+    },
+    "ProcessorNotificationEnabled": {
+      "Fn::And": [
+        {
+          "Condition": "ProcessorResourcesEnabled"
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "EnableProcessorNotification"
+            },
+            "true"
+          ]
+        }
+      ]
+    },
+    "HasAssetDeliveryDistribution": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "AssetDeliveryDistributionArn"
+            },
+            ""
+          ]
+        }
+      ]
+    }
+  },
+  "Mappings": {
+    "EnvironmentConfig": {
+      "development": {
+        "AllowedOrigin": "http://localhost:3011"
+      },
+      "production": {
+        "AllowedOrigin": "https://bdag.community"
+      }
+    }
+  },
+  "Resources": {
+    "AssetBucket": {
+      "Type": "AWS::S3::Bucket",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "BucketName": {
+          "Fn::Sub": "bdag-community-assets-${Environment}-${AWS::AccountId}-${AWS::Region}"
+        },
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "CorsConfiguration": {
+          "CorsRules": [
+            {
+              "AllowedHeaders": [
+                "Content-Type",
+                "If-None-Match"
+              ],
+              "AllowedMethods": [
+                "PUT"
+              ],
+              "AllowedOrigins": [
+                {
+                  "Fn::FindInMap": [
+                    "EnvironmentConfig",
+                    {
+                      "Ref": "Environment"
+                    },
+                    "AllowedOrigin"
+                  ]
+                }
+              ],
+              "MaxAge": 300
+            }
+          ]
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "ExpireQuarantineObjects",
+              "Status": "Enabled",
+              "Prefix": "news/quarantine/",
+              "ExpirationInDays": 7,
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 7
+              }
+            },
+            {
+              "Id": "ExpireRejectedObjects",
+              "Status": "Enabled",
+              "Prefix": "news/rejected/",
+              "ExpirationInDays": 30,
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 30
+              }
+            },
+            {
+              "Id": "AbortIncompleteMultipartUploads",
+              "Status": "Enabled",
+              "Prefix": "news/",
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 1
+              }
+            }
+          ]
+        },
+        "NotificationConfiguration": {
+          "Fn::If": [
+            "ProcessorNotificationEnabled",
+            {
+              "LambdaConfigurations": [
+                {
+                  "Event": "s3:ObjectCreated:Put",
+                  "Function": {
+                    "Fn::GetAtt": [
+                      "ProcessorFunction",
+                      "Arn"
+                    ]
+                  },
+                  "Filter": {
+                    "S3Key": {
+                      "Rules": [
+                        {
+                          "Name": "prefix",
+                          "Value": "news/quarantine/"
+                        },
+                        {
+                          "Name": "suffix",
+                          "Value": "/original"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "bdag-community"
+          },
+          {
+            "Key": "Owner",
+            "Value": "BlockDAG Engineering"
+          },
+          {
+            "Key": "Environment",
+            "Value": {
+              "Ref": "Environment"
+            }
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CloudFormation"
+          },
+          {
+            "Key": "DataClassification",
+            "Value": "UntrustedUploads"
+          }
+        ]
+      }
+    },
+    "AssetBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "AssetBucket"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyInsecureTransport",
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Action": "s3:*",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AssetBucket",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Sub": "${AssetBucket.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              }
+            },
+            {
+              "Sid": "DenyMissingQuarantineWriteCondition",
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${AssetBucket.Arn}/news/quarantine/*"
+              },
+              "Condition": {
+                "Null": {
+                  "s3:if-none-match": "true"
+                }
+              }
+            },
+            {
+              "Sid": "DenyIncorrectQuarantineWriteCondition",
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${AssetBucket.Arn}/news/quarantine/*"
+              },
+              "Condition": {
+                "StringNotEquals": {
+                  "s3:if-none-match": "*"
+                }
+              }
+            },
+            {
+              "Sid": "DenyStaleQuarantineSignature",
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${AssetBucket.Arn}/news/quarantine/*"
+              },
+              "Condition": {
+                "NumericGreaterThan": {
+                  "s3:signatureAge": "300000"
+                }
+              }
+            },
+            {
+              "Sid": "DenyMissingProcessedWriteCondition",
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${AssetBucket.Arn}/news/processed/*"
+              },
+              "Condition": {
+                "Null": {
+                  "s3:if-none-match": "true"
+                }
+              }
+            },
+            {
+              "Sid": "DenyIncorrectProcessedWriteCondition",
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${AssetBucket.Arn}/news/processed/*"
+              },
+              "Condition": {
+                "StringNotEquals": {
+                  "s3:if-none-match": "*"
+                }
+              }
+            },
+            {
+              "Fn::If": [
+                "HasAssetDeliveryDistribution",
+                {
+                  "Sid": "AllowCloudFrontPublishedReads",
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Service": "cloudfront.amazonaws.com"
+                  },
+                  "Action": "s3:GetObject",
+                  "Resource": {
+                    "Fn::Sub": "${AssetBucket.Arn}/news/published/*"
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "AWS:SourceArn": {
+                        "Ref": "AssetDeliveryDistributionArn"
+                      }
+                    }
+                  }
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "IntakeUser": {
+      "Type": "AWS::IAM::User",
+      "Properties": {
+        "UserName": {
+          "Fn::Sub": "bdag-community-assets-${Environment}-intake"
+        },
+        "Path": "/bdag-community/",
+        "Policies": [
+          {
+            "PolicyName": "quarantine-write-only",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "WriteQuarantineObjects",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:PutObject"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${AssetBucket.Arn}/news/quarantine/*"
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "s3:if-none-match": "*",
+                      "s3:authType": "REST-QUERY-STRING",
+                      "s3:signatureversion": "AWS4-HMAC-SHA256"
+                    },
+                    "NumericLessThanEquals": {
+                      "s3:signatureAge": "300000"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "bdag-community"
+          },
+          {
+            "Key": "Owner",
+            "Value": "BlockDAG Engineering"
+          },
+          {
+            "Key": "Environment",
+            "Value": {
+              "Ref": "Environment"
+            }
+          },
+          {
+            "Key": "Purpose",
+            "Value": "QuarantinePresigning"
+          }
+        ]
+      }
+    },
+    "ModeratorUser": {
+      "Type": "AWS::IAM::User",
+      "Condition": "ProcessorResourcesEnabled",
+      "Properties": {
+        "UserName": {
+          "Fn::Sub": "bdag-community-assets-${Environment}-moderator"
+        },
+        "Path": "/bdag-community/",
+        "Policies": [
+          {
+            "PolicyName": "processed-review-and-publish",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "ReadProcessedAssets",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:GetObjectVersion"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${AssetBucket.Arn}/news/processed/*"
+                  }
+                },
+                {
+                  "Sid": "PublishProcessedCopies",
+                  "Effect": "Allow",
+                  "Action": "s3:PutObject",
+                  "Resource": {
+                    "Fn::Sub": "${AssetBucket.Arn}/news/published/*"
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "s3:x-amz-metadata-directive": "REPLACE",
+                      "s3:if-none-match": "*"
+                    },
+                    "StringLike": {
+                      "s3:x-amz-copy-source": {
+                        "Fn::Sub": "${AssetBucket}/news/processed/*"
+                      }
+                    }
+                  }
+                },
+                {
+                  "Sid": "RecoverPublishedVersions",
+                  "Effect": "Allow",
+                  "Action": "s3:GetObject",
+                  "Resource": {
+                    "Fn::Sub": "${AssetBucket.Arn}/news/published/*"
+                  }
+                },
+                {
+                  "Sid": "DeleteExactManagedAssetVersions",
+                  "Effect": "Allow",
+                  "Action": "s3:DeleteObjectVersion",
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${AssetBucket.Arn}/news/quarantine/*"
+                    },
+                    {
+                      "Fn::Sub": "${AssetBucket.Arn}/news/processed/*"
+                    },
+                    {
+                      "Fn::Sub": "${AssetBucket.Arn}/news/published/*"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "bdag-community"
+          },
+          {
+            "Key": "Owner",
+            "Value": "BlockDAG Engineering"
+          },
+          {
+            "Key": "Environment",
+            "Value": {
+              "Ref": "Environment"
+            }
+          },
+          {
+            "Key": "Purpose",
+            "Value": "ProcessedAssetModeration"
+          }
+        ]
+      }
+    },
+    "ProcessorExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Condition": "ProcessorResourcesEnabled",
+      "Properties": {
+        "RoleName": {
+          "Fn::Sub": "bdag-community-assets-${Environment}-processor"
+        },
+        "Path": "/bdag-community/",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "article-cover-processor",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "ReadVersionedQuarantineObject",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:GetObjectVersion"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:s3:::bdag-community-assets-${Environment}-${AWS::AccountId}-${AWS::Region}/news/quarantine/*"
+                  }
+                },
+                {
+                  "Sid": "ReadProcessedResults",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:GetObjectVersion"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:s3:::bdag-community-assets-${Environment}-${AWS::AccountId}-${AWS::Region}/news/processed/*"
+                  }
+                },
+                {
+                  "Sid": "WriteImmutableProcessedResults",
+                  "Effect": "Allow",
+                  "Action": "s3:PutObject",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:s3:::bdag-community-assets-${Environment}-${AWS::AccountId}-${AWS::Region}/news/processed/*"
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "s3:if-none-match": "*"
+                    }
+                  }
+                },
+                {
+                  "Sid": "WriteProcessorLogs",
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${ProcessorLogGroup.Arn}:*"
+                  }
+                },
+                {
+                  "Sid": "SendFailedInvocations",
+                  "Effect": "Allow",
+                  "Action": "sqs:SendMessage",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "ProcessorFailureQueue",
+                      "Arn"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "ProcessorFailureQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Condition": "ProcessorResourcesEnabled",
+      "Properties": {
+        "KmsMasterKeyId": "alias/aws/sqs",
+        "MessageRetentionPeriod": 1209600,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "bdag-community"
+          },
+          {
+            "Key": "Environment",
+            "Value": {
+              "Ref": "Environment"
+            }
+          }
+        ]
+      }
+    },
+    "ProcessorLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Condition": "ProcessorResourcesEnabled",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/bdag-community-assets-${Environment}-processor"
+        },
+        "RetentionInDays": 14
+      }
+    },
+    "ProcessorFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Condition": "ProcessorResourcesEnabled",
+      "DependsOn": [
+        "ProcessorLogGroup"
+      ],
+      "Properties": {
+        "FunctionName": {
+          "Fn::Sub": "bdag-community-assets-${Environment}-processor"
+        },
+        "Description": "Converts private untrusted article covers into bounded WebP derivatives.",
+        "Runtime": "nodejs24.x",
+        "Architectures": [
+          "arm64"
+        ],
+        "Handler": "dist/index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "ProcessorExecutionRole",
+            "Arn"
+          ]
+        },
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ProcessorCodeBucket"
+          },
+          "S3Key": {
+            "Ref": "ProcessorCodeKey"
+          },
+          "S3ObjectVersion": {
+            "Ref": "ProcessorCodeVersion"
+          }
+        },
+        "MemorySize": 2048,
+        "Timeout": 30,
+        "Environment": {
+          "Variables": {
+            "ASSET_BUCKET": {
+              "Fn::Sub": "bdag-community-assets-${Environment}-${AWS::AccountId}-${AWS::Region}"
+            },
+            "ASSET_ENVIRONMENT": {
+              "Ref": "Environment"
+            },
+            "QUARANTINE_PREFIX": "news/quarantine/",
+            "PROCESSED_PREFIX": "news/processed/"
+          }
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "bdag-community"
+          },
+          {
+            "Key": "Environment",
+            "Value": {
+              "Ref": "Environment"
+            }
+          },
+          {
+            "Key": "DataClassification",
+            "Value": "UntrustedUploads"
+          }
+        ]
+      }
+    },
+    "ProcessorInvokePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Condition": "ProcessorResourcesEnabled",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "ProcessorFunction"
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "s3.amazonaws.com",
+        "SourceAccount": {
+          "Ref": "AWS::AccountId"
+        },
+        "SourceArn": {
+          "Fn::Sub": "arn:${AWS::Partition}:s3:::bdag-community-assets-${Environment}-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    },
+    "ProcessorEventInvokeConfig": {
+      "Type": "AWS::Lambda::EventInvokeConfig",
+      "Condition": "ProcessorResourcesEnabled",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "ProcessorFunction"
+        },
+        "Qualifier": "$LATEST",
+        "MaximumRetryAttempts": 1,
+        "MaximumEventAgeInSeconds": 3600,
+        "DestinationConfig": {
+          "OnFailure": {
+            "Destination": {
+              "Fn::GetAtt": [
+                "ProcessorFailureQueue",
+                "Arn"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "AssetBucketName": {
+      "Description": "The private environment-specific asset bucket.",
+      "Value": {
+        "Ref": "AssetBucket"
+      }
+    },
+    "AssetBucketArn": {
+      "Description": "The private asset bucket ARN.",
+      "Value": {
+        "Fn::GetAtt": [
+          "AssetBucket",
+          "Arn"
+        ]
+      }
+    },
+    "IntakeUserArn": {
+      "Description": "The credential-free quarantine intake identity.",
+      "Value": {
+        "Fn::GetAtt": [
+          "IntakeUser",
+          "Arn"
+        ]
+      }
+    },
+    "ModeratorUserArn": {
+      "Condition": "ProcessorResourcesEnabled",
+      "Description": "The credential-free processed-asset moderation identity.",
+      "Value": {
+        "Fn::GetAtt": [
+          "ModeratorUser",
+          "Arn"
+        ]
+      }
+    },
+    "ProcessorFunctionName": {
+      "Condition": "ProcessorResourcesEnabled",
+      "Description": "The environment-specific image processor function name.",
+      "Value": {
+        "Ref": "ProcessorFunction"
+      }
+    },
+    "ProcessorFunctionArn": {
+      "Condition": "ProcessorResourcesEnabled",
+      "Description": "The environment-specific image processor function ARN.",
+      "Value": {
+        "Fn::GetAtt": [
+          "ProcessorFunction",
+          "Arn"
+        ]
+      }
+    },
+    "ProcessorFailureQueueUrl": {
+      "Condition": "ProcessorResourcesEnabled",
+      "Description": "The environment-specific processor failure queue URL.",
+      "Value": {
+        "Ref": "ProcessorFailureQueue"
+      }
+    },
+    "ProcessorFailureQueueArn": {
+      "Condition": "ProcessorResourcesEnabled",
+      "Description": "The environment-specific processor failure queue ARN.",
+      "Value": {
+        "Fn::GetAtt": [
+          "ProcessorFailureQueue",
+          "Arn"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,50 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+*.key
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+excalidraw.log
+
+# local env files (keep .env.local.example tracked)
+.env
+.env.local
+.env.*
+!.env.local.example
+
+# Supabase CLI local project metadata
+supabase/.temp/
+supabase/.branches/
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# local-only Claude Code skills (symlink to ~/BDAG/Skills, not vendored into the repo)
+/.claude/skills
+
+# Internal handoff / ops docs — local only, never committed or shipped
+# (they carry operator identity, IPs, and topology; keep them out of the repo)
+/checkpoint.md
+/SITE-AUDIT-BACKLOG.md
+# Local-only compose overrides (e.g. a private-mesh review binding)
+/docker-compose.override.yml
+/RPC-AND-CONTENT-OPPORTUNITIES.md
