@@ -43,6 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // it rides along here the same way article pages do: a known route that is
   // not in NAV_LINKS but should still be crawled.
   const projectsView = [
+    { url: new URL("/testnet", SITE.url).toString(), changeFrequency: "weekly" as const, priority: 0.7 },
     {
       url: new URL("/community/projects", SITE.url).toString(),
       changeFrequency: "weekly" as const,

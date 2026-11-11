@@ -2455,3 +2455,56 @@ export const ROUTE_STATES = {
   },
   reference: "Reference",
 } as const;
+
+/* Shared Community Testnet. Public wallet data only; node admission stays private. */
+export const TESTNET = {
+  title: "Testnet",
+  subtitle: "Try what comes next, together",
+  intro: "Our shared testing ground for Staking V2, community governance and apps built on BlockDAG. Explore the platforms, try the journeys and help us improve them before Mainnet.",
+  description: "Connect to BDAG Community Testnet, try Staking V2 and DAO proposals, and find the network configuration and node access steps for chain 1043.",
+  notice: "Test BDAG has no monetary value. This is a separate network from Mainnet. Use a dedicated test wallet and never send real BDAG to it.",
+  network: {
+    name: "BDAG Community Testnet", chainId: 1043, chainIdHex: "0x413",
+    currency: { name: "Test BDAG", symbol: "BDAG", decimals: 18 },
+    rpcUrl: "https://testnet-staking.bdag.co/rpc",
+    fallbackRpcUrl: "https://testnet-api.bdag.co/rpc",
+    nativeGenesis: "0x06d7950592aa0319de5e81bc29a7ac283010274a5ca2561f319ab1bdb8b222df",
+    evmGenesis: "0x58d97c1c16a3ff988105c2bd101b2f473103cc2ef7106ade3296647de65a1663",
+    evmGenesisStateRoot: "0xba6c20f5d0f78f8f636d6f96888608b06e81398efb2f5b8163c695229d8e4488",
+  },
+  setup: {
+    eyebrow: "Your wallet, connected",
+    title: "Add the testing network",
+    body: "Use the button in a browser with MetaMask, or add the network manually with the details alongside it. On a phone, open this page inside MetaMask’s browser.",
+    add: "Add to MetaMask", pending: "Check your wallet…",
+    sent: "Network details sent to your wallet. Complete its prompt, then select BDAG Community Testnet.",
+    manual: "Manual setup works too: in MetaMask, open Networks → Add a custom network and enter these values. The currency symbol is BDAG. The network name and chain ID distinguish these test coins from Mainnet.",
+    steps: [
+      { title: "Use a test account", body: "Create a fresh account, or import the test wallet you received privately from the team. Keep its private key or recovery phrase to yourself." },
+      { title: "Add chain 1043", body: "Approve the network details in your wallet. Select BDAG Community Testnet before connecting to either testing platform." },
+      { title: "Get test BDAG", body: "Request test funds from the faucet below, then connect to a platform. You can use the same account for Staking and Development." },
+    ],
+    explorer: "There is no dedicated Testnet explorer yet. Leave the explorer field blank and use your wallet’s Activity view for transaction details. Mainnet explorers do not show this chain.",
+  },
+  labels: { name: "Network name", chain: "Chain ID", currency: "Currency symbol", rpc: "Primary RPC", fallback: "Alternative RPC", fingerprint: "Network fingerprint", nativeGenesis: "Native genesis hash", genesis: "EVM genesis hash", stateRoot: "Genesis state root" },
+  platformsTitle: "Put it to the test",
+  platformsIntro: "Both platforms use the same network and account. Every balance, stake and proposal here is for testing.",
+  platforms: [
+    { kind: "staking", title: "Staking", tag: "Legacy + Staking V2", body: "Choose a pool, stake test BDAG, follow rewards and try unstaking and claiming. Existing Legacy positions can exit on the same network while your new V2 stake stays separate.", href: "https://testnet-staking.bdag.co/", cta: "Try Staking", detail: "New V2 stakes start their own bonding period. The app reads the waiting periods from the chain." },
+    { kind: "development", title: "Development", tag: "Community proposals + DAO", body: "Explore proposals, check earned voting power and try the community review process. Register as a developer, follow decisions and see how accepted work moves forward.", href: "https://testnet-development.bdag.co/", cta: "Try Development", detail: "Voting power comes from eligible rewards. It becomes usable in the following voting epoch and expires when that epoch ends." },
+  ],
+  operators: {
+    eyebrow: "Help run the network", title: "Bring a node to Testnet",
+    body: "Connect through our public seed without ZeroTier or individual peer approval. Get the verified Testnet build and paired chain snapshot from the team, then follow its installation guide.",
+    publicSeed: "/ip4/154.70.222.46/tcp/18160/p2p/16Uiu2HAmD78L3GVeqrXN4M2nk9fRmYZxrNC9vddWY5W2mbpSir2Z",
+    steps: [
+      { title: "Prepare your device", body: "Use a supported Linux AMD64 device with an SSD and enough space for both chain databases. Keep your node identity and backups private." },
+      { title: "Receive the current package", body: "The team supplies the approved build, verification details and setup instructions for this network. Verify the signature and checksums before installing." },
+      { title: "Join and verify", body: "Connect to the public seed below, then verify the genesis and a shared checkpoint. Keep mining disabled until synchronization and mining checks pass." },
+    ],
+    cta: "Ask about running a node", href: "/contact",
+    note: "This is a node-to-node connection, not a wallet RPC. The verified package and paired snapshot are supplied by the team. Downloads are not yet self-service. Existing nodes can keep their configuration. The X30 continues mining for now. CPU and GPU mining will be qualified separately.",
+  },
+  feedback: { title: "Help make the next release better", body: "Collect your findings in one message: the page, steps you followed, what you expected and what happened. Include your browser and transaction hash when available. Never include a private key or recovery phrase.", cta: "Send feedback", href: "/contact" },
+  link: { title: "Try it on Testnet", body: "Explore Staking V2 and the Development platform with test BDAG. Wallet setup and access details are on our Testnet page.", cta: "Explore Testnet", href: "/testnet" },
+} as const;

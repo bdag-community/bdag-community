@@ -15,7 +15,7 @@
 #     -t bdag-community .
 
 # ---------- deps: install from the lockfile, cached layer ----------
-FROM node:22-slim AS deps
+FROM node@sha256:e5a8dee7bc1e6a215d224a7ef8206f7e77271bc3cabd5febf2beafac0674f174 AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 # `npm install` (not the stricter `npm ci`): the lockfile is generated on macOS
@@ -26,7 +26,7 @@ COPY package.json package-lock.json ./
 RUN npm install --no-audit --no-fund
 
 # ---------- builder: compile the standalone server ----------
-FROM node:22-slim AS builder
+FROM node@sha256:e5a8dee7bc1e6a215d224a7ef8206f7e77271bc3cabd5febf2beafac0674f174 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -52,7 +52,7 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
 RUN npm run build
 
 # ---------- runner: tiny, non-root, runs the standalone server ----------
-FROM node:22-slim AS runner
+FROM node@sha256:e5a8dee7bc1e6a215d224a7ef8206f7e77271bc3cabd5febf2beafac0674f174 AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \

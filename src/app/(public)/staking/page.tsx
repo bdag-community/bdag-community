@@ -1,3 +1,4 @@
+import { TestnetLink } from "@/components/testnet/TestnetLink";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import { ArrowUpRight, Hourglass } from "lucide-react";
@@ -46,6 +47,8 @@ export default function StakingPage() {
           label="staking"
         />
       </Section>
+
+      <Section><TestnetLink headingLevel={2} /></Section>
 
       {/* ------------------------- Status, up front ------------------------- */}
       {/* First, because nothing below it should be acted on unread. The card

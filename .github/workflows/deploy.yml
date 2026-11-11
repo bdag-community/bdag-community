@@ -31,7 +31,7 @@ jobs:
   deploy:
     if: github.ref == 'refs/heads/main' && vars.XNEELO_DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -53,13 +53,32 @@ jobs:
           git archive HEAD | gzip | ssh -i ~/.ssh/deploy_key ubuntu@"$SERVER" \
             'rm -rf /opt/bdag-community/src && mkdir -p /opt/bdag-community/src && tar xzf - -C /opt/bdag-community/src'
 
-      - name: Build and swap container (on the server)
-        # ops/deploy.sh is versioned in the repo; refresh the server copy from
-        # the just-shipped source BEFORE running it, so the installed script
-        # can never drift from the repo again.
+      - name: Read public build configuration
         run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@"$SERVER" 'python3 -' > /tmp/public-build.json <<'PYTHON'
+          import json
+          from pathlib import Path
+          values=dict(line.split('=',1) for line in Path('/opt/bdag-community/bdag-community.env').read_text().splitlines() if '=' in line and not line.startswith('#'))
+          names=['NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','NEXT_PUBLIC_TURNSTILE_SITE_KEY','ASSET_STORAGE_ENVIRONMENT','ASSET_DELIVERY_ORIGIN']
+          print(json.dumps({k:values[k] for k in names}))
+          PYTHON
+
+      - name: Build image on native AMD64 runner
+        run: |
+          python3 - <<'PYTHON'
+          import json,os,subprocess
+          values=json.load(open('/tmp/public-build.json'))
+          args=['docker','build','--label','org.opencontainers.image.revision='+os.environ['GITHUB_SHA'],'-t','bdag-community:verified-'+os.environ['GITHUB_SHA']]
+          for k,v in values.items():args+=['--build-arg',k+'='+v]
+          subprocess.run(args+['.'],check=True)
+          PYTHON
+
+      - name: Transfer verified image and swap healthy candidate
+        run: |
+          set -o pipefail
+          docker save bdag-community:verified-${{ github.sha }} | gzip | ssh -i ~/.ssh/deploy_key ubuntu@"$SERVER" 'gunzip | docker load'
           ssh -i ~/.ssh/deploy_key ubuntu@"$SERVER" \
-            'install -m 0755 /opt/bdag-community/src/ops/deploy.sh /opt/bdag-community/deploy.sh && bash /opt/bdag-community/deploy.sh'
+            'install -m 0755 /opt/bdag-community/src/ops/deploy.sh /opt/bdag-community/deploy.sh && BDAG_PREBUILT_IMAGE=bdag-community:verified-${{ github.sha }} bash /opt/bdag-community/deploy.sh'
 
       - name: Verify public health
         run: |

@@ -123,6 +123,14 @@ esac
 build_id="$(date -u +%Y%m%d%H%M%S)"
 candidate_image="bdag-community:production-${build_id}"
 
+if [ -n "${BDAG_PREBUILT_IMAGE:-}" ]; then
+  if [[ ! "$BDAG_PREBUILT_IMAGE" =~ ^bdag-community:verified-[a-f0-9]{40}$ ]]; then
+    echo "DEPLOY FAILED: invalid prebuilt image reference" >&2
+    exit 1
+  fi
+  docker image inspect "$BDAG_PREBUILT_IMAGE" >/dev/null
+  candidate_image="$BDAG_PREBUILT_IMAGE"
+else
 echo "==> building candidate image"
 # This box is a shared 3.9GB VM (bdag-miner-sales runs beside this site). A
 # `next build` memory spike once pushed the whole host into swap-thrash — sshd
@@ -139,6 +147,7 @@ docker build \
   --build-arg ASSET_STORAGE_ENVIRONMENT="$ASSET_STORAGE_ENVIRONMENT" \
   --build-arg ASSET_DELIVERY_ORIGIN="$ASSET_DELIVERY_ORIGIN" \
   -t "$candidate_image" .
+fi
 
 cleanup_candidate() {
   if [ "$promoted" != "true" ]; then
