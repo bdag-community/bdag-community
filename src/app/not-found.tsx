@@ -16,9 +16,7 @@ import { NotFoundBody } from "@/components/site/NotFoundBody";
  * skip link, same header, same `main` with tabIndex={-1} so the skip link
  * moves focus in Safari, same footer.
  *
- * No RevealRuntime and no spine wrapper. Nothing on this page is armed and
- * nothing draws a chain, so both would be dead weight on the one page a
- * reader reaches by accident.
+ * This page renders its content without scroll reveals or the chain animation.
  */
 export default function RootNotFound() {
   return (

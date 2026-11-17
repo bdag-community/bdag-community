@@ -20,6 +20,8 @@ export const PROJECTS_SEED: CommunityProject[] = [
     imageSrcSet: null,
     imageAlt: "",
     publishedAt: "2026-08-14T09:00:00Z",
+    featured: false,
+    focused: false,
   },
   {
     id: "seed-rms-chainpulse",
@@ -33,6 +35,8 @@ export const PROJECTS_SEED: CommunityProject[] = [
     imageSrcSet: null,
     imageAlt: "",
     publishedAt: "2026-08-17T09:00:00Z",
+    featured: false,
+    focused: false,
   },
   {
     id: "seed-welshdag",
@@ -46,6 +50,8 @@ export const PROJECTS_SEED: CommunityProject[] = [
     imageSrcSet: null,
     imageAlt: "",
     publishedAt: "2026-08-16T09:00:00Z",
+    featured: false,
+    focused: false,
   },
   {
     id: "seed-capedag",
@@ -59,5 +65,7 @@ export const PROJECTS_SEED: CommunityProject[] = [
     imageSrcSet: null,
     imageAlt: "",
     publishedAt: "2026-08-17T09:00:00Z",
+    featured: false,
+    focused: false,
   },
 ];

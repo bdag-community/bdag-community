@@ -6,6 +6,7 @@ import { ExchangeWarning } from "@/components/home/ExchangeWarning";
 import { Timeline } from "@/components/home/Timeline";
 import { Participate } from "@/components/home/Participate";
 import { NewsPreview } from "@/components/home/NewsPreview";
+import { ProjectSpotlight } from "@/components/home/ProjectSpotlight";
 import { Spine } from "@/components/spine/Spine";
 import { HOME_HEADLINE } from "@/lib/content/site";
 
@@ -39,6 +40,7 @@ export default function HomePage() {
       <ExchangeWarning />
       <Timeline />
       <Participate />
+      <ProjectSpotlight />
       <NewsPreview />
 
       <Section>

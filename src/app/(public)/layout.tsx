@@ -1,6 +1,5 @@
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
-import { RevealRuntime } from "@/components/site/RevealRuntime";
 import { ScrollReset } from "@/components/site/ScrollReset";
 
 /**
@@ -15,10 +14,6 @@ import { ScrollReset } from "@/components/site/ScrollReset";
  * wrapper stays `relative` here because that is what `.spine { inset: 0 }`
  * resolves against.
  *
- * <RevealRuntime> renders null. It is the one client component on an inner
- * page and the only thing on the site that may hide content: everything it
- * touches is visible until it arms it, and it never arms what is already on
- * screen.
  */
 export default function PublicLayout({
   children,
@@ -39,7 +34,6 @@ export default function PublicLayout({
           Safari (and older WebKit) will scroll to a non-focusable #main but
           leave focus on the link, so the next Tab returns to the header
           instead of entering the content the user just asked for. */}
-      <RevealRuntime />
       <ScrollReset />
       <div className="relative">
         <main

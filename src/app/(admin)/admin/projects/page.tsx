@@ -73,6 +73,8 @@ export default async function AdminProjectsPage() {
                       project.category as keyof typeof PROJECT_CATEGORIES
                     ] ?? PROJECT_CATEGORIES.utility}
                   </Chip>
+                  {project.is_published && project.is_focused && <Chip>Focused</Chip>}
+                  {project.is_published && project.is_featured && <Chip>Featured</Chip>}
                   {project.submitted_by_community ? (
                     <Chip className="border-accent/40 bg-accent/5 text-accent-soft">
                       {ADMIN_PROJECTS_COPY.communitySubmission}

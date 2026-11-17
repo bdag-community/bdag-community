@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
-import { CONVERGE, dagBus } from "@/lib/spine/bus";
+import { CONVERGE, HERO_SCROLL_RATE, dagBus } from "@/lib/spine/bus";
 
 /**
  * The hero's animated background: growing DAG filaments.
@@ -613,11 +613,9 @@ export function DagField({ className }: { className?: string }) {
         gen: c.gen,
         path,
         t0: now,
-        // Halved with LOCK.SPAN. A bolt that took up to 1.1s to cross the
-        // field was the other half of the opening feeling long: the charge
-        // could be finished while bolts were still in flight behind it.
         dur:
-          Math.min(450, Math.max(160, path.length * 34)) + CONVERGE.HOP_MS,
+          (Math.min(450, Math.max(160, path.length * 34)) + CONVERGE.HOP_MS) /
+          HERO_SCROLL_RATE,
         sprite: 2, // always teal: machine energy arriving at the block
         to: { x: tx, y: ty },
       });

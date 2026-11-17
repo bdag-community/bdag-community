@@ -30,6 +30,8 @@ export const CONVERGE = {
   RECYCLE_DEFER_MS: 1400,
 } as const;
 
+export const HERO_SCROLL_RATE = 1.4;
+
 /**
  * The opening hold: the first approach to the hero charges the field instead
  * of moving the page, and the page only moves once the block has gone live.
@@ -45,7 +47,7 @@ export const LOCK = {
    *  converging, the block filling) is paced by how fast the charge climbs,
    *  and the charge climbs with this. It was 420, which read as a sit-through
    *  rather than as a gesture. */
-  SPAN: 210,
+  SPAN: 210 / HERO_SCROLL_RATE,
   /** Visible fill required before the completed node may hand off to scroll. */
   FILL_READY: 0.995,
   /** Absolute ceiling on one uninterrupted gesture burst, and NOT a lever on
@@ -67,7 +69,7 @@ export const LOCK = {
   /** A deltaMode=1 (line) wheel notch, in pixels. */
   LINE_PX: 16,
   /** Bounded glide from the completed hero to the network band. */
-  GLIDE_MS: 700,
+  GLIDE_MS: 700 / HERO_SCROLL_RATE,
   /** How long the charge the hold reached stays pinned afterwards — long
    *  enough to cover the discharge, so the payoff cannot collapse in the
    *  frames before real scroll is far enough down to carry it. */
@@ -80,14 +82,14 @@ export const LOCK = {
   /** The bolt's run down the descender, once the block goes live. Long enough
    *  to read as travel rather than a flash, short enough that a reader already
    *  scrolling on has not left it behind. */
-  DISCHARGE_MS: 760,
+  DISCHARGE_MS: 760 / HERO_SCROLL_RATE,
   /** …and how far it pushes the circuit's own draw, in route pixels, so the
    *  chain below the hero is already alive and led by its front when the page
    *  starts moving. Converted to a fraction of the route at use. */
   DISCHARGE_PX: 300,
   /** The ramp that carries that push. Matches DISCHARGE_MS so the descender's
    *  bolt and the circuit's front are one continuous movement. */
-  DISCHARGE_TAU: 280,
+  DISCHARGE_TAU: 280 / HERO_SCROLL_RATE,
   /** Reset only once the hero has effectively left the viewport. The node is
    *  still visible at the old 0.5vh replay gate on laptop-height screens. */
   RESET_AT_HERO: 0.98,
@@ -105,9 +107,9 @@ export const SPINE = {
    *  where they were would have let the visible fill lag a charge that now
    *  arrives twice as fast, which shows up as the block still filling after
    *  the field has finished. */
-  TAU_CHARGE: 60,
+  TAU_CHARGE: 60 / HERO_SCROLL_RATE,
   TAU_FLASH: 260,
-  TAU_FILL: 75,
+  TAU_FILL: 75 / HERO_SCROLL_RATE,
   /** The head rides the reading line, not the viewport top. */
   READ_LINE: 0.62,
   IDLE_MS: 400,
@@ -120,9 +122,9 @@ export const SPINE = {
   /** Drawn runs in the circuit. The row is broken at every node block it
    *  passes behind, so this is the fixed turns plus roughly two per cell. */
   RUN_POOL: 36,
-  /** Travelling fronts for the participation fork and the later News fan.
+  /** Travelling fronts for the participation fork, featured projects and News.
    *  Their intervals never overlap, so at most two move on any frame. */
-  ARM_POOL: 4,
+  ARM_POOL: 6,
   /** How far ahead of the reading line the circuit's front runs, as a
    *  fraction of the viewport.
    *

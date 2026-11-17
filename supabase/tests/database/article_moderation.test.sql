@@ -336,8 +336,8 @@ select is(
       and prosecdef
       and pg_get_userbyid(proowner) = 'postgres'
   ),
-  18,
-  'all eighteen admin workflow RPCs (articles + projects) are postgres-owned security definers'
+  19,
+  'all nineteen admin workflow RPCs (articles + projects) are postgres-owned security definers'
 );
 
 set local role authenticated;

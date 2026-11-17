@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { HERO } from "@/lib/content/site";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -19,6 +19,14 @@ const LETTER_ENTER_S = 0.6;
  *  and one full blink of the empty slot. */
 const LETTER_DELAY_S = 1;
 
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+function subscribeToReducedMotion(onChange: () => void) {
+  const query = window.matchMedia(REDUCED_MOTION_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
 /**
  * The hero's identity loop: Engineers → Enthusiasts → Developers → Miners →
  * Stakers → **Community** — the last one preceded by a blinking caret and
@@ -34,7 +42,11 @@ const LETTER_DELAY_S = 1;
  * shifting the layout.
  */
 export function WordRotate() {
-  const reduced = useReducedMotion();
+  const reduced = useSyncExternalStore(
+    subscribeToReducedMotion,
+    () => window.matchMedia(REDUCED_MOTION_QUERY).matches,
+    () => false,
+  );
   const words = [...HERO.rotatingWords, HERO.finalWord];
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);

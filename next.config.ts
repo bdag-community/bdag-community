@@ -26,6 +26,10 @@ import type { NextConfig } from "next";
  *  - frame-ancestors 'none'    : clickjacking defense (mirrors X-Frame-Options).
  */
 const isDev = process.env.NODE_ENV !== "production";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const localSupabaseOrigin = isDev
+  ? supabaseUrl.match(/^http:\/\/(?:127\.0\.0\.1|localhost):\d{1,5}(?=\/?$)/)?.[0]
+  : undefined;
 
 function configuredAssetDeliveryOrigin(): string {
   const origin = process.env.ASSET_DELIVERY_ORIGIN ?? "";
@@ -70,7 +74,7 @@ const cspDirectives = [
   // <base>, so 'self' is safe and closes an injected-<base>/form-hijack gap.
   "base-uri 'self'",
   "form-action 'self'",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://s3.eu-central-1.amazonaws.com",
+  `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://s3.eu-central-1.amazonaws.com${localSupabaseOrigin ? ` ${localSupabaseOrigin}` : ""}`,
   `img-src 'self' data:${assetDeliveryOrigin ? ` ${assetDeliveryOrigin}` : ""}`,
   `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
