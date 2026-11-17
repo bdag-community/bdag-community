@@ -179,12 +179,8 @@ export const MARKETS = [
 ] as const;
 
 /* ---------------------------------------------------------------------------
- * Community channels. `mock: true` renders the coming-soon treatment (handle
- * as inert text, "Invite coming soon" chip); `mock: false` publishes the URL
- * as a live invite link. Telegram went live 2026-08-13 with the group invite
- * the owner supplied; Reddit followed 2026-09-10 and LinkedIn on 2026-09-17.
- * Discord, X and GitHub stay coming-soon until they are provided; never flip
- * a flag without a real invite in hand.
+ * Community channels. A live channel carries a URL and handle. Coming-soon
+ * channels use `mock: true` until the community supplies their links.
  * ------------------------------------------------------------------------- */
 
 export const CHANNELS = [
@@ -205,6 +201,20 @@ export const CHANNELS = [
     handle: "Join the mining group",
     url: "https://t.me/+XTBIEkYZ1is5Zjg5",
     blurb: "Mining talk: X30 and X100 setup, pools, and payouts.",
+    mock: false,
+  },
+  {
+    name: "YouTube",
+    handle: "@BDAGCommunity",
+    url: "https://www.youtube.com/@BDAGCommunity",
+    blurb: "Videos and updates from BDAG Community.",
+    mock: false,
+  },
+  {
+    name: "X (Twitter)",
+    handle: "@1Bdag_Community",
+    url: "https://x.com/1Bdag_Community",
+    blurb: "Community announcements and network updates.",
     mock: false,
   },
   /* Temporarily hidden on Contact and Community pending Reddit verification
@@ -234,11 +244,6 @@ export const CHANNELS = [
   {
     name: "Discord",
     blurb: "Structured channels for mining, staking, development, and support.",
-    mock: true,
-  },
-  {
-    name: "X (Twitter)",
-    blurb: "Announcements, network updates, and news amplification.",
     mock: true,
   },
   {
@@ -1229,7 +1234,7 @@ export const COMMUNITY_PAGE = {
   ],
   channelsTitle: "Where we talk",
   channelsNote:
-    "The Telegram groups and LinkedIn page are live. The other channels are still being finalised, and each invite will be published here when it opens.",
+    "Join the Telegram groups, watch community videos on YouTube, and follow updates on X and LinkedIn.",
   /** The whole visible state of a `mock: true` channel: the full card wears
    *  it as the chip (and renders no handle line at all), the compact list
    *  shows it where a live channel shows its link. Placeholder handles are

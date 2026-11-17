@@ -382,13 +382,17 @@ test("the supplied community channels are live; the others stay coming-soon", ()
     /url: "https:\/\/www\.linkedin\.com\/company\/blockdag-network\/"/,
   );
   assert.match(entry("LinkedIn"), /mock: false/);
+  assert.match(entry("YouTube"), /url: "https:\/\/www\.youtube\.com\/@BDAGCommunity"/);
+  assert.match(entry("YouTube"), /mock: false/);
+  assert.match(entry("X (Twitter)"), /url: "https:\/\/x\.com\/1Bdag_Community"/);
+  assert.match(entry("X (Twitter)"), /mock: false/);
   assert.doesNotMatch(block, /t\.me\/bdagcommunity\b/, "placeholder invite gone");
   assert.doesNotMatch(block, /t\.me\/BdagCommunityGroup/, "retired community handle gone");
   // Coming soon means NO handle and NO url in the data at all: the old
   // placeholder strings (an unowned discord.gg slug, an unregistered X
   // handle) were fake data one rendering bug away from publication. A
   // channel goes live by gaining both fields and flipping mock: false.
-  for (const name of ["Discord", "X (Twitter)", "GitHub"]) {
+  for (const name of ["Discord", "GitHub"]) {
     const e = entry(name);
     assert.match(e, /mock: true/, `${name} must stay coming-soon`);
     assert.doesNotMatch(e, /url:/, `${name} must not carry a URL until real`);

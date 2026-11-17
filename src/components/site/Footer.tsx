@@ -58,6 +58,10 @@ const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent " +
   "focus-visible:ring-offset-2 focus-visible:ring-offset-base-void";
 
+const SOCIAL_CHANNELS = CHANNELS.filter(
+  (channel) => channel.name === "YouTube" || channel.name === "X (Twitter)",
+);
+
 export function Footer() {
   return (
     <footer className="relative mt-20 border-t border-border/60 bg-gradient-to-b from-container/30 to-base-void">
@@ -98,6 +102,21 @@ export function Footer() {
                 {CONTACT_EMAIL}
               </a>
             ) : null}
+            <ul aria-label="Follow BDAG Community" className="flex flex-wrap gap-x-5 text-sm">
+              {SOCIAL_CHANNELS.map((channel) => (
+                <li key={channel.name}>
+                  <a
+                    href={channel.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex min-h-[44px] items-center gap-1.5 ${LINK}`}
+                  >
+                    {channel.name}
+                    <ArrowUpRight className="size-3.5" strokeWidth={1.75} aria-hidden />
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
 
           {/* Page-link columns */}
@@ -174,7 +193,7 @@ export function Footer() {
             <p className="text-xs text-on-surface-variant">
               {CHANNELS.filter((c) => c.mock)
                 .map((c) => c.name)
-                .join(", ")}{" "}
+                .join(" and ")}{" "}
               are coming soon.{" "}
               <Link
                 href="/community"

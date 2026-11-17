@@ -1,6 +1,7 @@
 import {
   ArrowUpRight,
   Building2,
+  Clapperboard,
   Cpu,
   GitBranch,
   Megaphone,
@@ -23,6 +24,7 @@ const CHANNEL_ICONS: Record<(typeof CHANNELS)[number]["name"], LucideIcon> = {
   // Reddit: MessageCircle, // Temporarily hidden pending verification.
   LinkedIn: Building2,
   Discord: MessagesSquare,
+  YouTube: Clapperboard,
   "X (Twitter)": Megaphone,
   GitHub: GitBranch,
 };
