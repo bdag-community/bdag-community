@@ -78,7 +78,7 @@ const rowToProject = (row: ProjectRow): CommunityProject => {
         : "utility",
     authorName: row.author_name,
     imageUrl:
-      delivery?.imageUrl ?? (hasSelectStartCover ? "/projects/select-start-banner.png" : null),
+      delivery?.imageUrl ?? (hasSelectStartCover ? "/projects/select-start-banner-v2.png" : null),
     imageSrcSet: delivery?.imageSrcSet ?? null,
     imageAlt: delivery?.imageAlt ?? "",
     publishedAt: row.published_at ?? new Date(0).toISOString(),
@@ -114,7 +114,7 @@ const getCachedPublishedProjects = unstable_cache(
       Date.parse(b.publishedAt) - Date.parse(a.publishedAt),
     );
   },
-  ["published-projects", "placement-v2"],
+  ["published-projects", "placement-v3"],
   {
     tags: [PUBLISHED_PROJECTS_CACHE_TAG],
     revalidate: PUBLIC_PROJECTS_REVALIDATE_SECONDS,
