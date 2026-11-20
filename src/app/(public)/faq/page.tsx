@@ -25,7 +25,7 @@ export const metadata: Metadata = {
  * whose answers ship in the DOM (findable by in-page search, present with no
  * JS), with open/closed state that costs nothing to keep. The chevron follows
  * the element's own `open` attribute via group-open, so there is no state to
- * desynchronise. Named group (group/item) because the evidence link inside the
+ * desynchronise. Named group (group/item) because the related link inside the
  * panel carries the house `group` class for its arrow nudge, and the two must
  * not hear each other's hovers; the optional nested "full explanation" uses a
  * second named group (group/more) for the same reason.
@@ -43,16 +43,14 @@ export const metadata: Metadata = {
  * which is the part the page cannot do without; the alternative (APG
  * accordion, h2 > button[aria-expanded]) buys reliable heading navigation
  * at the price of the client bundle and hand-rolled state this page was
- * built to avoid. Print: closed details would print nine questions and no
+ * built to avoid. Print: closed details would print the questions and no
  * answers, so the print block in globals.css forces details content
  * visible and hides the chevron.
  */
 export default function FaqPage() {
   return (
     <>
-      {/* The same nine answers, in the form an answer engine can quote. The
-          first one — "Is this the official BlockDAG site?" — is the reason
-          this page exists, and the reason it is worth being quoted on. */}
+      {/* Structured data uses the same questions and answers as the page. */}
       <JsonLd data={faqPageSchema()} />
       <JsonLd data={breadcrumbSchema([{ name: "FAQ", path: "/faq" }])} />
 

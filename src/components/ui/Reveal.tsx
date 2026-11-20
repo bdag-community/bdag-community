@@ -1,18 +1,11 @@
 import type { ComponentPropsWithoutRef, CSSProperties, ReactNode } from "react";
+import { RevealFrame } from "./RevealFrame";
 
 /**
  * Content-first reveal shell.
  *
- * The resting state IS the final state: nothing here is hidden by CSS. Only
- * <RevealRuntime> may add `.is-armed`, and it only ever arms blocks that are
- * already below the fold. So a page with no JS, a page whose chunk failed, and
- * a page in reduced motion all render exactly what the site rendered before
- * this file existed. That guarantee is structural, not a promise.
- *
- * Server component on purpose. This used to be "use client" + motion/react and
- * it produced literally zero pixels of animation on ~50 call sites while
- * dragging 130.7 KB raw / 42.6 KB gz of motion onto five routes — because
- * `initial={false}` makes whileInView animate from the target state.
+ * Frames are visible in the server render. The shared observer only arms
+ * frames that have hydrated and are below the fold.
  */
 export function Reveal({
   children,
@@ -25,8 +18,7 @@ export function Reveal({
   className?: string;
 }) {
   return (
-    <div
-      data-reveal
+    <RevealFrame
       className={className}
       style={
         delay
@@ -35,7 +27,7 @@ export function Reveal({
       }
     >
       {children}
-    </div>
+    </RevealFrame>
   );
 }
 
@@ -56,8 +48,7 @@ export function RevealGroup({
   className?: string;
 }) {
   return (
-    <div
-      data-reveal
+    <RevealFrame
       data-reveal-group
       className={className}
       style={
@@ -67,7 +58,7 @@ export function RevealGroup({
       }
     >
       {children}
-    </div>
+    </RevealFrame>
   );
 }
 

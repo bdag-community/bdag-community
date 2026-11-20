@@ -26,7 +26,7 @@ export const PUBLISHED_PROJECTS_CACHE_TAG = "published-projects";
 const PUBLIC_PROJECTS_REVALIDATE_SECONDS = 600;
 
 const PUBLIC_PROJECT_FIELDS =
-  "id,name,description,url,category,author_name,published_at,published_asset_id,published_asset_alt_text";
+  "id,name,description,url,category,author_name,published_at,published_asset_id,published_asset_alt_text,is_featured,is_focused";
 
 export type CommunityProject = {
   /** Stable identity for list rendering: the DB row id, or a seed slug. */
@@ -41,6 +41,8 @@ export type CommunityProject = {
   imageSrcSet: string | null;
   imageAlt: string;
   publishedAt: string; // ISO
+  featured: boolean;
+  focused: boolean;
 };
 
 type ProjectRow = {
@@ -53,6 +55,8 @@ type ProjectRow = {
   published_at: string | null;
   published_asset_id: string | null;
   published_asset_alt_text: string | null;
+  is_featured: boolean;
+  is_focused: boolean;
 };
 
 const rowToProject = (row: ProjectRow): CommunityProject => {
@@ -61,6 +65,8 @@ const rowToProject = (row: ProjectRow): CommunityProject => {
     assetId: row.published_asset_id,
     altText: row.published_asset_alt_text,
   });
+  const hasSelectStartCover =
+    row.url.replace(/\/+$/, "").toLowerCase() === "https://selectstart.now";
   return {
     id: row.id,
     name: row.name,
@@ -71,10 +77,13 @@ const rowToProject = (row: ProjectRow): CommunityProject => {
         ? (row.category as ProjectCategory)
         : "utility",
     authorName: row.author_name,
-    imageUrl: delivery?.imageUrl ?? null,
+    imageUrl:
+      delivery?.imageUrl ?? (hasSelectStartCover ? "/projects/select-start-banner-v2.png" : null),
     imageSrcSet: delivery?.imageSrcSet ?? null,
     imageAlt: delivery?.imageAlt ?? "",
     publishedAt: row.published_at ?? new Date(0).toISOString(),
+    featured: row.is_featured,
+    focused: row.is_focused,
   };
 };
 
@@ -86,7 +95,8 @@ async function fetchLiveProjects(): Promise<CommunityProject[] | null> {
       .from("community_projects")
       .select(PUBLIC_PROJECT_FIELDS)
       .eq("is_published", true)
-      .order("published_at", { ascending: false });
+      .order("published_at", { ascending: false })
+      .order("id");
     if (error || !data) return null;
     return (data as ProjectRow[]).map(rowToProject);
   } catch {
@@ -98,13 +108,13 @@ async function fetchLiveProjects(): Promise<CommunityProject[] | null> {
 const getCachedPublishedProjects = unstable_cache(
   async (): Promise<CommunityProject[]> => {
     const live = await fetchLiveProjects();
+    if (live && live.length > 0) return live;
     const seed = (await import("@/lib/content/projects-seed")).PROJECTS_SEED;
-    const projects = live && live.length > 0 ? live : seed;
-    return [...projects].sort((a, b) =>
-      b.publishedAt.localeCompare(a.publishedAt),
+    return [...seed].sort((a, b) =>
+      Date.parse(b.publishedAt) - Date.parse(a.publishedAt),
     );
   },
-  ["published-projects"],
+  ["published-projects", "placement-v3"],
   {
     tags: [PUBLISHED_PROJECTS_CACHE_TAG],
     revalidate: PUBLIC_PROJECTS_REVALIDATE_SECONDS,

@@ -1325,7 +1325,7 @@ body::before {
 }
 /* Linear, like the glint: a charge travelling a wire has no reason to ease. */
 [data-discharge] .hero-discharge {
-  animation: hero-discharge-run 760ms linear 1 both;
+  animation: hero-discharge-run var(--hero-discharge-duration, 543ms) linear 1 both;
 }
 @keyframes hero-discharge-run {
   0% {
@@ -2431,6 +2431,12 @@ body::before {
 @media (min-width: 1024px) {
   .hub-node-row {
     display: flex;
+  }
+}
+@media (min-width: 640px) {
+  .hub-node-row--projects {
+    display: flex;
+    margin-top: 3.25rem;
   }
 }
 .hub-node {

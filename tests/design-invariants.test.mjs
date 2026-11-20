@@ -148,12 +148,12 @@ test("nothing can hide content under reduced motion", () => {
   );
 });
 
-test("Reveal ships no client runtime", () => {
-  // It rendered zero pixels of animation on ~50 call sites while dragging
-  // 42.6 KB gz of motion onto five routes. Keep it a server component.
+test("Reveal keeps its wrappers on the server and avoids the Motion library", () => {
   const reveal = code(read("../src/components/ui/Reveal.tsx"));
+  const frame = code(read("../src/components/ui/RevealFrame.tsx"));
   assert.doesNotMatch(reveal, /["']use client["']/);
   assert.doesNotMatch(reveal, /motion/);
+  assert.doesNotMatch(frame, /from ["']motion/);
 });
 
 test("the edge has a forced-colors fallback", () => {

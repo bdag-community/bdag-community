@@ -382,13 +382,17 @@ test("the supplied community channels are live; the others stay coming-soon", ()
     /url: "https:\/\/www\.linkedin\.com\/company\/blockdag-network\/"/,
   );
   assert.match(entry("LinkedIn"), /mock: false/);
+  assert.match(entry("YouTube"), /url: "https:\/\/www\.youtube\.com\/@BDAGCommunity"/);
+  assert.match(entry("YouTube"), /mock: false/);
+  assert.match(entry("X (Twitter)"), /url: "https:\/\/x\.com\/1Bdag_Community"/);
+  assert.match(entry("X (Twitter)"), /mock: false/);
   assert.doesNotMatch(block, /t\.me\/bdagcommunity\b/, "placeholder invite gone");
   assert.doesNotMatch(block, /t\.me\/BdagCommunityGroup/, "retired community handle gone");
   // Coming soon means NO handle and NO url in the data at all: the old
   // placeholder strings (an unowned discord.gg slug, an unregistered X
   // handle) were fake data one rendering bug away from publication. A
   // channel goes live by gaining both fields and flipping mock: false.
-  for (const name of ["Discord", "X (Twitter)", "GitHub"]) {
+  for (const name of ["Discord"]) {
     const e = entry(name);
     assert.match(e, /mock: true/, `${name} must stay coming-soon`);
     assert.doesNotMatch(e, /url:/, `${name} must not carry a URL until real`);
@@ -398,6 +402,8 @@ test("the supplied community channels are live; the others stay coming-soon", ()
       `${name} must not carry a placeholder handle`,
     );
   }
+  assert.match(entry("GitHub"), /url: COMMUNITY_GITHUB_URL/);
+  assert.match(entry("GitHub"), /mock: false/);
   // The visible label is exactly "Coming soon" (2026-08-13), and the full
   // card must not also render a handle line saying it a second time.
   assert.match(site, /channelMockChip: "Coming soon"/);
@@ -658,37 +664,12 @@ test("run a node is instructions, in the order you do them", () => {
   assert.match(n, /256 GB SSD or NVMe/);
   assert.match(n, /spinning disk/i, "the storage caveat is the useful part");
 
-  // The release URL lives in ONE place and is rendered with CopyRef, because
-  // its stated use is being pasted into an assistant or a terminal.
   const community = read("../src/app/(public)/community/page.tsx");
-  assert.match(community, /<CopyRef\s+value=\{COMMUNITY_PAGE\.runNode\.release\.url\}/);
-  assert.doesNotMatch(
-    community,
-    /href=\{COMMUNITY_PAGE\.runNode\.release\.url\}/,
-    "not rendered as a hyperlink",
-  );
-  assert.equal(
-    (site.match(/bdag-ipfs-release-page/g) ?? []).length,
-    1,
-    "the release URL must have exactly one home in site.ts",
-  );
-
-  // …and it must be the ROOT, never a pinned version. The first draft named a
-  // specific release that had ALREADY been superseded two days after it was
-  // published, and the page had no way of knowing.
-  // Scoped to the release object: runNode now holds two URLs, and the first
-  // `url:` in the block is the agent brief's.
-  const releaseBlock = objectAt(n, "release: {");
-  const url = /url:\s*"(https:\/\/[^"]+)"/.exec(releaseBlock);
-  assert.ok(url, "the release must carry a URL");
-  assert.doesNotMatch(url[1], /\/releases\//, "the release URL must not pin a version");
-  assert.match(url[1], /bdag-ipfs-release-page\/$/);
-
-  // The version beside it is READ, not typed.
+  assert.match(community, /href=\{COMMUNITY_PAGE\.runNode\.release\.href\}/);
+  assert.match(objectAt(n, "release: {"), /href: RELEASES_PAGE\.href/);
   assert.doesNotMatch(n, /rc\.\d+/, "no release version may be written into copy");
   assert.match(community, /getLatestRelease\(\)/);
   assert.match(community, /\{release\.version\}/);
-  assert.match(n, /no archive of earlier builds/i);
 
   // Each attachment sits INSIDE the step that needs it. The old layout put the
   // release link in one card and then told the reader to "copy the release
@@ -699,26 +680,16 @@ test("run a node is instructions, in the order you do them", () => {
   assert.match(community, /index === 1 \?/, "the release link belongs to step two");
 });
 
-test("the release resolver only talks to the page it is meant to", () => {
-  const src = read("../src/lib/releases.ts");
-
-  // One host, hard-coded. The latest-release path is PARSED out of a remote
-  // document, so it is validated rather than followed: a relative path of
-  // exactly the published shape, or nothing.
-  assert.match(src, /const BASE = "https:\/\/blockdagengineering\.github\.io\/bdag-ipfs-release-page"/);
-  assert.match(
-    src,
-    /\^releases\\\/\(\[A-Za-z0-9\._-\]\+\)\\\/index\\\.html\$/,
-    "the canonical path must be matched against a strict relative pattern",
-  );
-
-  // A draft or withdrawn build must never be presented as the current one.
-  assert.match(src, /!== "published"/);
-  // Every failure path returns null; the section renders without a version.
-  assert.match(src, /catch \{\s*return null;/);
-  // It never polls the page harder than the page asks to be read.
-  assert.match(src, /RELEASE_REVALIDATE_SECONDS = 600/);
-  assert.match(src, /revalidate: RELEASE_REVALIDATE_SECONDS/);
+test("the release page is discoverable without changing the primary navigation", () => {
+  const page = read("../src/app/(public)/releases/page.tsx");
+  const footer = read("../src/components/site/Footer.tsx");
+  const sitemap = read("../src/app/sitemap.ts");
+  assert.match(page, /getLatestRelease\(\)/);
+  assert.match(page, /getReleaseHistory\(\)/);
+  assert.match(page, /copy\.unavailable/);
+  assert.match(footer, /href: RELEASES_PAGE\.href/);
+  assert.match(sitemap, /new URL\(RELEASES_PAGE\.href, SITE\.url\)/);
+  assert.doesNotMatch(site, /blockdagengineering\.github\.io\/bdag-ipfs-release-page/);
 });
 
 test("a copy button that cannot use the Clipboard API still copies", () => {
@@ -838,10 +809,10 @@ test("the agent brief is generated, and never asks for a secret", () => {
   assert.match(lib, /\$\{CHAIN\.chainId\}/);
   assert.doesNotMatch(lib, /2\.0\.0-community-rescue/, "no release version typed in");
 
-  // It carries NO install commands. The release page ships a signed,
-  // version-specific runbook; a second copy of those steps here would go stale
-  // on the next release and could contradict a signed document.
+  // Use the published release and its verified corresponding source for instructions.
   assert.match(lib, /only authority for install steps/i);
+  assert.match(lib, /SHA-256 file/);
+  assert.doesNotMatch(lib, /release-manifest\.json|manifest signature|ai-agent-runbook/);
   assert.doesNotMatch(lib, /docker run|apt-get|curl -[a-zA-Z]* https/, "no commands");
 
   // The safety rule, which the release page states too: mining needs a public

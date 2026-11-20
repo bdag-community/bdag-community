@@ -1,9 +1,19 @@
 # Branches and deployment
 
-`develop` is for integration. `main` is the Community website deployed to the existing Xneelo host.
+Open contribution PRs against `develop`. Francois and Jeremy review those PRs
+and promote `develop` to `main` through a separate PR.
 
-Pushes and pull requests run type and application checks. A successful push to `main` builds a checksummed package. With the repository and host deployment gates enabled, that package is promoted to https://bdag.community/api/health using the existing Xneelo runtime. The dedicated key cannot open a shell or deploy another app. A manual run with `verify_xneelo` stages and validates the package without changing the active site. Host configuration and credentials stay on Xneelo.
+GitHub Actions runs type checks, lint and tests. A successful push to `main`
+builds a checksummed package, sends it over the dedicated deployment connection,
+and checks [production health](https://bdag.community/api/health). The
+`production` GitHub environment limits the deployment credential to `main`.
+The production server holds the application's runtime configuration.
 
-Source for this branch at import: `base`, revision `1759b1abb838848ad5af505de6068ed02a6c37a1`. The previous repository and history were preserved separately.
+An authorised maintainer can dispatch the workflow on `main` with **Verify
+package on Xneelo without deploying** for a staging check. Use **Publish this
+build to the approved site** to retry a missed automatic deployment.
 
-If GitHub does not deliver a push run, dispatch the workflow on the publishing branch with **Publish this build to the approved site**. That uses the same validation and host gates.
+If a promotion PR is missing its `bdag/promotion-source` check, run **Validate
+production promotion source** from `develop` and enter the PR number. The
+workflow checks the current PR source and reports the result for its test
+merge commit. The regular review and application checks still apply.

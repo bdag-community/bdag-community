@@ -299,7 +299,7 @@ test("the block fires into the chain on its live edge, not on gesture payoff", (
   assert.match(globals, /\[data-discharge\] \.hero-discharge \{/);
   assert.match(globals, /@keyframes hero-discharge-run/);
   // It runs ONCE. A loop here is the ambient glint's job, not the payoff's.
-  assert.match(globals, /animation: hero-discharge-run [\d.]+ms linear 1 both/);
+  assert.match(globals, /animation: hero-discharge-run var\(--hero-discharge-duration, [\d.]+ms\) linear 1 both/);
 });
 
 test("the opening plays again, but only for someone who actually left", () => {
@@ -550,7 +550,7 @@ test("the fork has a front on each arm, not none", () => {
   assert.match(code(geometry), /export type Strand/);
   assert.match(code(geometry), /arms: strands/);
   assert.match(ornament, /className="spine-arm-front"/);
-  assert.match(bus, /ARM_POOL: 4/);
+  assert.match(bus, /ARM_POOL: 6/);
   const loop = code(spine).match(
     /for \(let i = 0; i < armFrontEls\.length; i\+\+\) \{[\s\S]*?\n        \}/,
   )?.[0];
@@ -702,7 +702,7 @@ test("the News fan shares circuit progress and one synchronized completion state
   assert.match(code(spine), /circuit\.newsAt/);
   assert.match(code(spine), /is-news-reached/);
   assert.match(code(spine), /newsLit/);
-  assert.match(code(bus), /ARM_POOL:\s*4/);
+  assert.match(code(bus), /ARM_POOL:\s*6/);
 
   const reduced = spine.match(/const applyReduced = \(\) => \{[\s\S]*?\n    \};/)?.[0] ?? "";
   assert.match(reduced, /newsLit/);

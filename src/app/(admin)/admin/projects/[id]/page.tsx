@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { ProjectForm } from "@/components/admin/ProjectForm";
+import { ProjectPlacementForm } from "@/components/admin/ProjectPlacementForm";
 import { ProjectModerationPanel } from "@/components/admin/ProjectModerationPanel";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { requireAdmin } from "@/lib/dal/session";
@@ -56,6 +57,18 @@ export default async function EditProjectPage({
       </header>
 
       <ProjectForm project={project} />
+
+      {project.is_published ? (
+        <ProjectPlacementForm
+          id={project.id}
+          featured={project.is_featured}
+          focused={project.is_focused}
+        />
+      ) : (
+        <p className="text-sm text-on-surface-variant">
+          Publish this project to manage its homepage placement.
+        </p>
+      )}
 
       {/* The panel needs to know which environment's bucket THIS deployment
           reads, so it can say plainly when an image lives in the other one

@@ -13,6 +13,7 @@ import {
   COMMUNITY_MINER_SELLER,
   DEVELOPMENT_SECTION,
   MINING_SECTION,
+  OPEN_SOURCE,
   STAKING_SECTION,
 } from "@/lib/content/site";
 
@@ -171,6 +172,9 @@ export function Participate() {
                   }
                 >
                   {DEVELOPMENT_SECTION.cta.label}
+                </Button>
+                <Button href={OPEN_SOURCE.href} variant="ghost" trailingIcon={<ArrowRight className="size-4" aria-hidden />}>
+                  {OPEN_SOURCE.title}
                 </Button>
                 {/* What the community has already built, without waiting. */}
                 <Button

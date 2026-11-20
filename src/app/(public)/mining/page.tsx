@@ -268,13 +268,20 @@ export default async function MiningPage() {
               </p>
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <Button
+                  href={MINING_PAGE.endpoints.release.href}
+                  variant="ghost"
+                  trailingIcon={
+                    <ArrowRight className="size-4" strokeWidth={2} aria-hidden />
+                  }
+                >
+                  {MINING_PAGE.endpoints.release.label}
+                </Button>
+                <Button
                   href={MINING_PAGE.endpoints.support.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   variant="ghost"
-                  trailingIcon={
-                    <ArrowUpRight className="size-4" strokeWidth={2} aria-hidden />
-                  }
+                  trailingIcon={<ArrowUpRight className="size-4" aria-hidden />}
                 >
                   {MINING_PAGE.endpoints.support.label}
                 </Button>

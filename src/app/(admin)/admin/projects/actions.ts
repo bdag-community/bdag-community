@@ -83,6 +83,7 @@ const firstIssue = (error: z.ZodError) =>
 
 function revalidateProjects() {
   updateTag(PUBLISHED_PROJECTS_CACHE_TAG);
+  revalidatePath("/");
   revalidatePath("/community/projects");
   revalidatePath("/admin");
   revalidatePath("/admin/projects");
@@ -134,6 +135,33 @@ export async function updateProjectAction(
   }
   revalidateProjects();
   return { ok: true, message: ADMIN_PROJECTS_COPY.saved };
+}
+
+export async function setProjectPlacementAction(
+  id: string,
+  _previous: ActionSuccess | ActionFailure | null,
+  formData: FormData,
+): Promise<ActionSuccess | ActionFailure> {
+  await requireAdmin();
+  const parsedId = uuidSchema.safeParse(id);
+  if (!parsedId.success) {
+    return { ok: false, error: ADMIN_PROJECTS_COPY.invalidId };
+  }
+
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase.rpc("admin_set_project_placement", {
+    p_project_id: parsedId.data,
+    p_is_featured: formData.get("featured") === "on",
+    p_is_focused: formData.get("focused") === "on",
+  });
+  if (error) return { ok: false, error: "Could not save homepage placement." };
+  if (!data) {
+    return { ok: false, error: "Publish this project before setting its homepage placement." };
+  }
+
+  revalidateProjects();
+  revalidatePath(`/admin/projects/${parsedId.data}`);
+  return { ok: true, message: "Homepage placement saved." };
 }
 
 /**

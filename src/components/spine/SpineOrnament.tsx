@@ -86,8 +86,8 @@ export function SpineOrnament() {
         <circle className="spine-bolt-halo" r="8" />
         <circle className="spine-bolt" r="2.4" />
       </g>
-      {/* …and a pooled front per parallel strand. The participation fork and
-          News fan happen at different points, so only two move at once: the
+      {/* …and a pooled front per parallel strand. The forks and News fan
+          happen at different points, so only two move at once: the
           trunk hides for that span (Circuit.frontGaps) and these take over. */}
       {Array.from({ length: SPINE.ARM_POOL }, (_, i) => (
         <g key={`af${i}`} className="spine-arm-front">

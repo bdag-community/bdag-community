@@ -26,6 +26,7 @@ import {
   ENDPOINT_LABELS,
   META_DESCRIPTIONS,
   NODES_SECTION,
+  OPEN_SOURCE,
   WALLET_CONFIG_SNIPPET,
 } from "@/lib/content/site";
 
@@ -51,8 +52,8 @@ const releaseDate = new Intl.DateTimeFormat("en-GB", {
 });
 
 export default async function CommunityPage() {
-  // Resolved on the server and shared by every visitor, on the release page's
-  // own ten-minute cache. Null is a normal answer — the section renders its
+  // Resolved on the server and shared by every visitor, through the
+  // ten-minute GitHub release cache. Null is a normal answer — the section renders its
   // link and its instructions either way and simply claims no version.
   const [release, infrastructure] = await Promise.all([getLatestRelease(), getInfrastructureDirectory()]);
 
@@ -231,6 +232,21 @@ export default async function CommunityPage() {
         </div>
       </Section>
 
+      <Section as="section" id="open-source" aria-labelledby="open-source-heading" className="scroll-mt-24">
+        <Card className="flex flex-col items-start gap-4 p-6 sm:p-8">
+          <h2 id="open-source-heading" className="h2">{OPEN_SOURCE.title}</h2>
+          <p className="body max-w-[68ch]">{OPEN_SOURCE.body}</p>
+          <div className="flex flex-wrap gap-3">
+            <Button href={OPEN_SOURCE.github.href} target="_blank" rel="noopener noreferrer" trailingIcon={<ArrowUpRight className="size-4" aria-hidden />}>
+              {OPEN_SOURCE.github.label}
+            </Button>
+            <Button href={OPEN_SOURCE.contribute.href} target="_blank" rel="noopener noreferrer" variant="ghost">
+              {OPEN_SOURCE.contribute.label}
+            </Button>
+          </div>
+        </Card>
+      </Section>
+
       {/* ------------------------ Public RPC nodes ------------------------- */}
       <Section
         as="section"
@@ -326,55 +342,26 @@ export default async function CommunityPage() {
                       {/* min-w-0: the URL is one long unbreakable token and a
                           flex item's automatic minimum size is its content. */}
                       <div className="flex min-w-0 flex-col gap-1.5">
-                        <p className="label-caps text-on-surface-variant">
+                        <Button href={COMMUNITY_PAGE.runNode.release.href} trailingIcon={<ArrowRight className="size-4" aria-hidden />}>
                           {COMMUNITY_PAGE.runNode.release.label}
-                        </p>
-                        <CopyRef
-                          value={COMMUNITY_PAGE.runNode.release.url}
-                          label="release page link"
-                        />
+                        </Button>
                       </div>
-                      {/* The version is READ, never typed: the first draft of
-                          this section named a release that had already been
-                          superseded. When the manifest cannot be reached we
-                          say where the truth lives instead of guessing. */}
-                      <div className="flex min-w-0 flex-col gap-1.5">
-                        <p className="label-caps text-on-surface-variant">
-                          {release
-                            ? COMMUNITY_PAGE.runNode.release.currentLabel
-                            : COMMUNITY_PAGE.runNode.release.label}
-                        </p>
-                        {release ? (
+                      {release ? (
+                        <div className="flex min-w-0 flex-col gap-1.5">
+                          <p className="label-caps text-on-surface-variant">{COMMUNITY_PAGE.runNode.release.currentLabel}</p>
                           <p className="font-mono text-sm text-on-surface">
-                            {release.version}
-                            {release.publishedAt ? (
-                              <>
-                                {" · "}
-                                <time dateTime={release.publishedAt}>
-                                  {releaseDate.format(
-                                    new Date(release.publishedAt),
-                                  )}
-                                </time>
-                              </>
-                            ) : null}
+                            {release.version} · <time dateTime={release.publishedAt}>{releaseDate.format(new Date(release.publishedAt))}</time>
                           </p>
-                        ) : (
-                          <p className="body-sm">
-                            {COMMUNITY_PAGE.runNode.release.unavailable}
-                          </p>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <p className="body-sm">{COMMUNITY_PAGE.runNode.release.unavailable}</p>
+                      )}
                     </div>
-                  ) : null}
-                  {index === 1 ? (
-                    <p className="caption">
-                      {COMMUNITY_PAGE.runNode.release.historyNote}
-                    </p>
                   ) : null}
 
                   {/* The recommended path for step three: hand the whole job
                       to an agent running on the operator's own machine. The
-                      brief is GENERATED at /mining-onboarding.md so the
+                      brief is generated at /node-onboarding.md so the
                       endpoints and the release it names track the rest of the
                       site, and it carries no install commands of its own. */}
                   {index === 2 ? (
