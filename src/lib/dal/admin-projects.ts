@@ -20,6 +20,8 @@ export type AdminProjectRow = {
   author_name: string | null;
   submitted_by_community: boolean;
   is_published: boolean;
+  is_featured: boolean;
+  is_focused: boolean;
   published_at: string | null;
   published_asset_id: string | null;
   published_asset_alt_text: string | null;
@@ -48,7 +50,7 @@ export type AdminProjectAssetRow = {
 };
 
 const PROJECT_FIELDS =
-  "id,name,description,url,category,author_name,submitted_by_community,is_published,published_at,published_asset_id,published_asset_alt_text,created_at,updated_at";
+  "id,name,description,url,category,author_name,submitted_by_community,is_published,is_featured,is_focused,published_at,published_asset_id,published_asset_alt_text,created_at,updated_at";
 
 /** All projects — drafts included (the admin select-all RLS policy). */
 export async function listAllProjects(): Promise<AdminProjectRow[]> {

@@ -56,7 +56,7 @@ const RPC_SOURCES = [
     id: "bdag-us-east",
     operatorId: "bdag-us",
     url: "https://rpc.east.bdag-us.org/",
-    automatic: false,
+    automatic: true,
   },
   {
     id: "bdag-us-west",
@@ -92,7 +92,13 @@ const RPC_SOURCES = [
     id: "bdagexplorer",
     operatorId: "bdagexplorer",
     url: "https://rpc.bdagexplorer.com/",
-    automatic: false,
+    automatic: true,
+  },
+  {
+    id: "blockdag-solutions",
+    operatorId: "blockdag-solutions",
+    url: "https://rpc.blockdag.solutions/",
+    automatic: true,
   },
 ] as const satisfies readonly FixedRpcSource[];
 
@@ -405,7 +411,7 @@ async function assembleAutomaticRpcSources(
 }
 
 /**
- * Probe the three live-audited automatic sources at most once per 20 seconds.
+ * Probe the live-audited automatic sources at most once per 20 seconds.
  * Concurrent callers share the same in-flight promise, so a traffic burst can
  * never multiply upstream requests by the number of page/API requests.
  */

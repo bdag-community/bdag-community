@@ -24,7 +24,7 @@ const supabaseReadme = readFileSync(
 );
 
 test("there are migrations to check", () => {
-  assert.equal(migrations.length, 18, `expected 18 migrations (found ${files.length})`);
+  assert.equal(migrations.length, 19, `expected 19 migrations (found ${files.length})`);
 });
 
 test("every CREATE TABLE is idempotent (IF NOT EXISTS)", () => {

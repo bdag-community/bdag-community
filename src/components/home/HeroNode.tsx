@@ -1,6 +1,8 @@
 "use client";
 
 import { HERO } from "@/lib/content/site";
+import { LOCK } from "@/lib/spine/bus";
+import type { CSSProperties } from "react";
 
 /**
  * The hero's scroll affordance, re-imagined as a BLOCK.
@@ -41,7 +43,11 @@ export function HeroNode() {
           once, brighter and faster, and the circuit below picks the movement
           up on its own front. <Spine> fires it with data-discharge on the
           hero, and takes it off when the reader returns to the top. */}
-      <span aria-hidden className="hero-discharge-wrap">
+      <span
+        aria-hidden
+        className="hero-discharge-wrap"
+        style={{ "--hero-discharge-duration": `${LOCK.DISCHARGE_MS}ms` } as CSSProperties}
+      >
         <span className="hero-discharge">
           <span className="spine-bolt-halo-css" />
           <span className="hero-discharge-core" />

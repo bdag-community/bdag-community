@@ -1,115 +1,114 @@
-/**
- * The node stack's latest release, resolved from the release page itself.
- *
- * WHY THIS EXISTS. The community page used to name one release in copy. That
- * release was superseded two days after it was published and the page had no
- * way of knowing — exactly the failure this site's whole content rule exists
- * to prevent ("no measured figure written into copy"). A version number is a
- * measured figure like any other.
- *
- * WHAT THE RELEASE PAGE ACTUALLY OFFERS. There is no index of releases: the
- * directory listing 404s, and so do releases.json, index.json and sitemap.xml.
- * The repository behind it is not public either, so its tags cannot be read.
- * What the site does publish is:
- *   - a root page whose <link rel="canonical"> always points at the CURRENT
- *     release directory, and
- *   - a release-manifest.json inside each release directory.
- * So "the latest" is resolvable in two hops, and nothing older is enumerable.
- * That is the whole ceiling, and this module does not pretend otherwise.
- *
- * The manifest is served with `access-control-allow-origin: *` and
- * `cache-control: max-age=600`, so this could run in the browser — it is done
- * on the server anyway, for the same reason every other reading on this site
- * is: one fetch shared by every visitor rather than one per reader.
- */
+const ORGANISATION = "bdag-community";
+const REPOSITORY = "bdag-stack-releases";
+const GITHUB_RELEASES = `https://api.github.com/repos/${ORGANISATION}/${REPOSITORY}/releases`;
 
-/** The only host this module will talk to. */
-const BASE = "https://blockdagengineering.github.io/bdag-ipfs-release-page";
-
-/** Matches the release page's own cache-control, so we never poll it harder
- *  than it expects to be read. */
+export const COMMUNITY_GITHUB_URL = `https://github.com/${ORGANISATION}`;
+export const COMMUNITY_CONTRIBUTING_URL = `${COMMUNITY_GITHUB_URL}/bdag-community/blob/develop/CONTRIBUTING.md`;
+export const RELEASE_INDEX_URL = `${COMMUNITY_GITHUB_URL}/${REPOSITORY}/releases`;
+export const STACK_SOURCE_URL = `${COMMUNITY_GITHUB_URL}/bdag-stack-source`;
 export const RELEASE_REVALIDATE_SECONDS = 600;
 
-export type NodeRelease = {
-  /** e.g. "2.0.0-community-rescue-rc.62" */
-  version: string;
-  /** Monotonic release counter from the manifest. */
-  sequence: number | null;
-  /** ISO timestamp, or null when the manifest omits it. */
-  publishedAt: string | null;
-  /** Canonical URL for THIS release. */
+export type ReleaseDownload = {
+  kind: "amd64" | "arm64" | "source";
   url: string;
+  checksumUrl: string;
 };
 
-/** The root always redirects to the current release; this is that entry point,
- *  and it is what the page links so a reader can never land on a stale one. */
-export const RELEASE_INDEX_URL = `${BASE}/`;
+export type NodeRelease = {
+  tag: string;
+  title: string;
+  version: string;
+  publishedAt: string;
+  url: string;
+  downloads: ReleaseDownload[];
+  qualification: string;
+};
 
-/**
- * Pull the current release directory out of the root page.
- *
- * The root is a meta-refresh shim with a matching <link rel="canonical">. Only
- * a RELATIVE path of exactly the shape the page publishes is accepted — this
- * is parsed from a remote document, so an absolute URL or anything with a
- * traversal segment in it is discarded rather than followed.
- */
-function releaseDirFrom(html: string): string | null {
-  const canonical = /<link[^>]+rel="canonical"[^>]+href="([^"]+)"/i.exec(html);
-  const refresh = /<meta[^>]+http-equiv="refresh"[^>]+url=([^"'>\s]+)/i.exec(html);
-  const raw = canonical?.[1] ?? refresh?.[1];
-  if (!raw) return null;
-  const match = /^releases\/([A-Za-z0-9._-]+)\/index\.html$/.exec(raw.trim());
-  return match ? match[1] : null;
+const PACKAGE_TYPES = [
+  { kind: "amd64", name: /^pool-stack-docker-[-\w.]+-linux-amd64\.zip$/ },
+  { kind: "arm64", name: /^pool-stack-docker-[-\w.]+-linux-arm64\.zip$/ },
+  { kind: "source", name: /^bdag-community-stack-[-\w.]+-source\.zip$/ },
+] as const;
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
 }
 
-/**
- * The current release, or null if the page cannot be read.
- *
- * Null is a first-class answer, not an error: the section it feeds renders its
- * link and its instructions regardless, and simply says nothing about a
- * version it could not confirm.
- */
-export async function getLatestRelease(): Promise<NodeRelease | null> {
+function readDownloads(release: Record<string, unknown>, tag: string): ReleaseDownload[] {
+  if (!Array.isArray(release.assets)) return [];
+
+  const downloadBase = `${RELEASE_INDEX_URL}/download/${tag}/`;
+  const assets = new Map<string, string>();
+  for (const entry of release.assets) {
+    const asset = asRecord(entry);
+    if (!asset || asset.state !== "uploaded" || typeof asset.name !== "string") continue;
+    if (!/^[\w.-]+$/.test(asset.name) || asset.name === "." || asset.name === "..") continue;
+    const url = `${downloadBase}${asset.name}`;
+    if (asset.browser_download_url === url) assets.set(asset.name, url);
+  }
+
+  const downloads: ReleaseDownload[] = [];
+  for (const { kind, name } of PACKAGE_TYPES) {
+    const matches = [...assets.keys()].filter((file) => name.test(file) && assets.has(`${file}.sha256`));
+    if (matches.length !== 1) continue;
+    const file = matches[0];
+    downloads.push({ kind, url: `${downloadBase}${file}`, checksumUrl: `${downloadBase}${file}.sha256` });
+  }
+  return downloads;
+}
+
+function readRelease(value: unknown): NodeRelease | null {
+  const release = asRecord(value);
+  if (!release || release.draft !== false || release.prerelease !== false) return null;
+
+  const tag = release.tag_name;
+  if (typeof tag !== "string" || !/^stack-v\d+\.\d+\.\d+(?:\+[\w.-]+)?$/.test(tag)) return null;
+
+  const publishedAt = release.published_at;
+  if (typeof publishedAt !== "string" || !Number.isFinite(Date.parse(publishedAt))) return null;
+
+  // Show the publisher's qualification beside the downloads. Render it as text.
+  const qualification = typeof release.body === "string"
+    ? release.body.split(/^#{1,6}[ \t]+Qualification[ \t]*\r?$/mi)[1]?.split(/^#{1,6}[ \t]/m)[0]?.trim() ?? ""
+    : "";
+
+  const version = tag.slice("stack-".length);
+  return {
+    tag,
+    title: typeof release.name === "string" && release.name.trim() ? release.name : version,
+    version,
+    publishedAt,
+    url: `${RELEASE_INDEX_URL}/tag/${tag}`,
+    downloads: readDownloads(release, tag),
+    qualification,
+  };
+}
+
+async function readGithub(suffix: string): Promise<unknown> {
   try {
-    const rootRes = await fetch(RELEASE_INDEX_URL, {
+    const response = await fetch(`${GITHUB_RELEASES}${suffix}`, {
+      headers: { Accept: "application/vnd.github+json" },
       next: { revalidate: RELEASE_REVALIDATE_SECONDS },
+      signal: AbortSignal.timeout(4_000),
+      redirect: "error",
     });
-    if (!rootRes.ok) return null;
-
-    const dir = releaseDirFrom(await rootRes.text());
-    if (!dir) return null;
-
-    const url = `${BASE}/releases/${dir}/`;
-    const manifestRes = await fetch(`${url}release-manifest.json`, {
-      next: { revalidate: RELEASE_REVALIDATE_SECONDS },
-    });
-    if (!manifestRes.ok) return null;
-
-    const manifest: unknown = await manifestRes.json();
-    const release = (manifest as { release?: Record<string, unknown> } | null)
-      ?.release;
-    if (!release) return null;
-
-    // Only a published release is ever surfaced. A draft or withdrawn build
-    // appearing on the community page as "the latest" would be worse than
-    // showing no version at all.
-    if (release.status !== undefined && release.status !== "published") {
-      return null;
-    }
-
-    const version =
-      typeof release.version === "string" ? release.version : dir;
-    return {
-      version,
-      sequence:
-        typeof release.sequence === "number" && Number.isFinite(release.sequence)
-          ? release.sequence
-          : null,
-      publishedAt:
-        typeof release.published_at === "string" ? release.published_at : null,
-      url,
-    };
+    return response.ok ? await response.json() : null;
   } catch {
     return null;
   }
+}
+
+export async function getLatestRelease(): Promise<NodeRelease | null> {
+  return readRelease(await readGithub("/latest"));
+}
+
+export async function getReleaseHistory(): Promise<NodeRelease[] | null> {
+  const response = await readGithub("?per_page=20");
+  if (!Array.isArray(response)) return null;
+  return response.flatMap((entry) => {
+    const release = readRelease(entry);
+    return release ? [release] : [];
+  }).sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
 }

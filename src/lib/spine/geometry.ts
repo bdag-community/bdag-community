@@ -270,6 +270,8 @@ export type CircuitInput = {
    *  one, the arms meet it on straight diagonals and the chain leaves it as a
    *  single line; without one they turn square and merge as they always did. */
   hub?: Box | null;
+  /** The spotlight splits into two featured cards and a second merge node. */
+  projects?: { spotlight: Box; cards: readonly Box[]; hub: Box } | null;
   /** Act V — the last framed section. The chain runs straight down the middle
    *  to reach it, behind whatever sits between, and ends on it. */
   tail?: Box | null;
@@ -328,7 +330,7 @@ export type Circuit = {
   /** …and the ranges the travelling front must not appear in, which is those
    *  plus the fork, where there is no single place for it to be. */
   frontGaps: [number, number][];
-  /** The fork's two arms, each with a front of its own for exactly the span
+  /** The parallel arms, each with a front of its own for exactly the span
    *  `frontGaps` takes the trunk's away. Empty when the route does not fork. */
   arms: Strand[];
   /** The node block drawn around each stats cell, which side the chain enters,
@@ -350,6 +352,7 @@ export type Circuit = {
   /** Where both participation arms land on the hub node, normalized. Infinity
    *  when there is no hub and the pair merges square, as it used to. */
   hubAt: number;
+  projectsHubAt: number;
 };
 
 const ARC_SAMPLES = 8;
@@ -852,7 +855,6 @@ export function buildCircuit(input: CircuitInput): Circuit | null {
   // carries the chain across its own width, so a block with two children can
   // simply hang them off its bottom edge.
   const branches = input.branches ?? [];
-  const forkY = endY;
   const canFork =
     branches.length === 2 &&
     mine !== null &&
@@ -881,18 +883,31 @@ export function buildCircuit(input: CircuitInput): Circuit | null {
    *  the arms would complete in no scroll at all. */
   const parallels: { atLen: number; read: number }[] = [];
 
-  if (canFork) {
+  const appendTrunk = (piece: RouteOut | null) => {
+    if (!piece) return;
+    runs = runs.concat(piece.runs);
+    hidden = hidden.concat(piece.hidden);
+    for (const h of piece.hidden) frontGaps.push(h);
+    for (const [k, v] of piece.crossAt) crossAt.set(k, v);
+    // The first point repeats where the preceding route left off.
+    pts = pts.concat(piece.points.slice(2));
+    lens = lens.concat(piece.lens.slice(1));
+    total += piece.len;
+  };
+
+  const validHub = (box: Box | null, branchBottom: number): box is Box =>
+    box !== null &&
+    box.t > branchBottom + 8 &&
+    box.b > box.t &&
+    Math.abs(centreOf(box) - cx) <= CIRCUIT.COLUMN_TOL;
+
+  const appendFork = (
+    branches: readonly Box[],
+    hub: Box | null,
+    frameCrossings: boolean,
+  ) => {
+    const forkY = endY;
     const branchBottom = Math.max(branches[0].b, branches[1].b);
-    // The hub only takes over if it really sits below the pair and on the
-    // centre line; a wrapped or shifted layout keeps the square merge.
-    const hubBox = input.hub ?? null;
-    const hub =
-      hubBox &&
-      hubBox.t > branchBottom + 8 &&
-      hubBox.b > hubBox.t &&
-      Math.abs(centreOf(hubBox) - cx) <= CIRCUIT.COLUMN_TOL
-        ? hubBox
-        : null;
     const hubX = hub ? centreOf(hub) : cx;
     /** The node's centre and radius. Both arms are aimed at the CENTRE and
      *  stopped on the rim, rather than converging to a point at twelve
@@ -918,7 +933,12 @@ export function buildCircuit(input: CircuitInput): Circuit | null {
         ay = y;
       };
       push(bx, b.t);
-      push(bx, b.b, false, FRAME0 + frameIds.length + i);
+      push(
+        bx,
+        b.b,
+        !frameCrossings,
+        frameCrossings ? FRAME0 + frameIds.length + i : -1,
+      );
       if (!hub) {
         push(bx, mergeY);
         push(cx, mergeY);
@@ -968,12 +988,11 @@ export function buildCircuit(input: CircuitInput): Circuit | null {
     pts = pts.concat([hubX, mergeY]);
     lens = lens.concat([total + armLen]);
     total += armLen;
-    frameIds.push(FRAME0 + frameIds.length, FRAME0 + frameIds.length + 1);
     endX = hubX;
     endY = mergeY;
     if (hub) {
       // The node ignites the moment both arms land on its rim.
-      hubReachedLen = total;
+      const reachedLen = total;
       // Across its own height the node IS the chain, exactly as a stats cell
       // is: nothing is stroked there and no front rides over it.
       const nodeH = hub.b - hub.t;
@@ -983,6 +1002,50 @@ export function buildCircuit(input: CircuitInput): Circuit | null {
       lens = lens.concat([total + nodeH]);
       total += nodeH;
       endY = hub.b;
+      return reachedLen;
+    }
+    return Infinity;
+  };
+
+  if (canFork) {
+    const hubBox = input.hub ?? null;
+    const branchBottom = Math.max(branches[0].b, branches[1].b);
+    hubReachedLen = appendFork(
+      branches,
+      validHub(hubBox, branchBottom) ? hubBox : null,
+      true,
+    );
+  }
+
+  let projectsHubReachedLen = Infinity;
+  const projects = input.projects;
+  if (projects?.cards.length === 2) {
+    const { spotlight, cards, hub } = projects;
+    const [left, right] = [...cards].sort((a, b) => a.l - b.l);
+    const projectBottom = Math.max(left.b, right.b);
+    if (
+      left.r < right.l &&
+      rowsOf(cards).length === 1 &&
+      spotlight.t > endY + 8 &&
+      cards.every((card) =>
+        card.t > spotlight.b + 8 &&
+        centreOf(card) > spotlight.l &&
+        centreOf(card) < spotlight.r,
+      ) &&
+      validHub(hub, projectBottom)
+    ) {
+      const entryY = mid(endY, spotlight.t);
+      const entry: Move[] = [
+        { x: endX, y: entryY, draw: true, cross: -1, tap: -1 },
+        { x: cx, y: entryY, draw: true, cross: -1, tap: -1 },
+        { x: cx, y: spotlight.t, draw: true, cross: -1, tap: -1 },
+        { x: cx, y: spotlight.b, draw: false, cross: -1, tap: -1 },
+      ];
+      if (endX === cx) entry.splice(0, 2);
+      appendTrunk(emitRoute(endX, endY, entry, total));
+      endX = cx;
+      endY = spotlight.b;
+      projectsHubReachedLen = appendFork([left, right], hub, false);
     }
   }
 
@@ -996,19 +1059,6 @@ export function buildCircuit(input: CircuitInput): Circuit | null {
   let newsDoneLen = Infinity;
   if (tail && tail.t > endY + 8) {
     const tailCx = centreOf(tail);
-
-    const appendTrunk = (piece: RouteOut | null) => {
-      if (!piece) return;
-      runs = runs.concat(piece.runs);
-      hidden = hidden.concat(piece.hidden);
-      for (const h of piece.hidden) frontGaps.push(h);
-      for (const [k, v] of piece.crossAt) crossAt.set(k, v);
-      // The first point repeats where the preceding route left off. Keeping
-      // it would give pointAtLen a zero-length cumulative span.
-      pts = pts.concat(piece.points.slice(2));
-      lens = lens.concat(piece.lens.slice(1));
-      total += piece.len;
-    };
 
     const news =
       input.news?.length === 3
@@ -1153,6 +1203,7 @@ export function buildCircuit(input: CircuitInput): Circuit | null {
     complete,
     newsAt: Number.isFinite(newsDoneLen) ? newsDoneLen / total : Infinity,
     hubAt: Number.isFinite(hubReachedLen) ? hubReachedLen / total : Infinity,
+    projectsHubAt: projectsHubReachedLen / total,
   };
 }
 /**

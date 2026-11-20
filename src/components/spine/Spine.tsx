@@ -153,8 +153,11 @@ export function Spine() {
     let pointLit: boolean[] = [];
     let newsEl: HTMLElement | null = null;
     let newsLit = false;
-    let hubEl: HTMLElement | null = null;
-    let hubLit = false;
+    const hubs = [
+      { section: "participation", progress: "hubAt" as const, el: null as HTMLElement | null, lit: false },
+      { section: "projects", progress: "projectsHubAt" as const, el: null as HTMLElement | null, lit: false },
+    ];
+    const [participationHub, projectsHub] = hubs;
     let frontOn = false;
     const armOn: boolean[] = [];
     let runLast: number[] = [];
@@ -390,7 +393,13 @@ export function Spine() {
       const mineEl = crossFrames[1] ?? null;
       const tailEl = crossFrames[2] ?? null;
       newsEl = main.querySelector<HTMLElement>("[data-spine-news]");
-      hubEl = main.querySelector<HTMLElement>("[data-spine-hub]");
+      for (const hub of hubs) {
+        hub.el = main.querySelector<HTMLElement>(`[data-spine-hub="${hub.section}"]`);
+      }
+      const projectSpotlight = main.querySelector<HTMLElement>("[data-spine-project-spotlight]");
+      const featuredProjects = Array.from(
+        main.querySelectorAll<HTMLElement>("[data-spine-featured-project]"),
+      );
       newsEl?.toggleAttribute(
         "data-spine-news-quiet",
         root.dataset.quiet !== undefined,
@@ -492,7 +501,15 @@ export function Spine() {
                 branchFrames.length === 2
                   ? branchFrames.map(layoutRectOf)
                   : null,
-              hub: hubEl ? layoutRectOf(hubEl) : null,
+              hub: participationHub.el ? layoutRectOf(participationHub.el) : null,
+              projects:
+                projectSpotlight && featuredProjects.length === 2 && projectsHub.el?.offsetWidth
+                  ? {
+                      spotlight: layoutRectOf(projectSpotlight),
+                      cards: featuredProjects.map(layoutRectOf),
+                      hub: layoutRectOf(projectsHub.el),
+                    }
+                  : null,
               tail: tailEl ? layoutRectOf(tailEl) : null,
               news: newsCards,
             })
@@ -506,10 +523,11 @@ export function Spine() {
         hasNewsFan &&
         (newsLit || drawK() >= (circuit?.newsAt ?? Infinity));
       newsEl?.classList.toggle("is-news-reached", newsLit);
-      hubLit =
-        Number.isFinite(circuit?.hubAt ?? Infinity) &&
-        (hubLit || drawK() >= (circuit?.hubAt ?? Infinity));
-      hubEl?.classList.toggle("is-lit", hubLit);
+      for (const hub of hubs) {
+        const at = circuit?.[hub.progress] ?? Infinity;
+        hub.lit = Number.isFinite(at) && (hub.lit || drawK() >= at);
+        hub.el?.classList.toggle("is-lit", hub.lit);
+      }
 
       // Act III leaves the CARD when there is a circuit — the chain has
       // already spent two acts getting there — and the hero otherwise.
@@ -545,7 +563,7 @@ export function Spine() {
 
       /* ---- trunk segments ---- */
       const spans: SegmentInput[] = [];
-      terminalY = Math.max(railStartY + 1, docH - 24);
+      terminalY = railed ? Math.max(railStartY + 1, docH - 24) : docH - 24;
       let cursor = railStartY;
       for (const a of anchors) {
         if (a.bottom <= cursor) continue;
@@ -760,7 +778,7 @@ export function Spine() {
         }
 
         const enrich = docH <= 24000;
-        const ghostDx = enrich ? ghostDxFor(colLeft) : 0;
+        const ghostDx = railed && enrich ? ghostDxFor(colLeft) : 0;
         if (ghostEl) {
           if (ghostDx > 0) {
             const gx = railX - ghostDx;
@@ -885,9 +903,11 @@ export function Spine() {
         newsLit = true;
         newsEl?.classList.add("is-news-reached");
       }
-      if (k >= circuit.hubAt) {
-        hubLit = true;
-        hubEl?.classList.add("is-lit");
+      for (const hub of hubs) {
+        if (k >= circuit[hub.progress]) {
+          hub.lit = true;
+          hub.el?.classList.add("is-lit");
+        }
       }
     };
 
@@ -1439,9 +1459,11 @@ export function Spine() {
           newsLit = true;
           dirtyClasses = true;
         }
-        if (!hubLit && k >= circuit.hubAt) {
-          hubLit = true;
-          dirtyClasses = true;
+        for (const hub of hubs) {
+          if (!hub.lit && k >= circuit[hub.progress]) {
+            hub.lit = true;
+            dirtyClasses = true;
+          }
         }
       }
       const renderedLive: 0 | 1 = openingReset ? 0 : dagBus.live;
@@ -1488,7 +1510,7 @@ export function Spine() {
         frameEls.forEach((el, i) => el?.classList.toggle("is-lit", frameLit[i] === true));
         pointEls.forEach((el, i) => el.classList.toggle("is-lit", pointLit[i] === true));
         newsEl?.classList.toggle("is-news-reached", newsLit);
-        hubEl?.classList.toggle("is-lit", hubLit);
+        for (const hub of hubs) hub.el?.classList.toggle("is-lit", hub.lit);
       }
     };
 
@@ -1575,8 +1597,10 @@ export function Spine() {
       pointEls.forEach((el) => el.classList.add("is-lit"));
       newsLit = Number.isFinite(circuit?.newsAt ?? Infinity);
       newsEl?.classList.toggle("is-news-reached", newsLit);
-      hubLit = Number.isFinite(circuit?.hubAt ?? Infinity);
-      hubEl?.classList.toggle("is-lit", hubLit);
+      for (const hub of hubs) {
+        hub.lit = Number.isFinite(circuit?.[hub.progress] ?? Infinity);
+        hub.el?.classList.toggle("is-lit", hub.lit);
+      }
       if (heroEl) {
         heroEl.style.setProperty("--hero-charge", "1");
         heroEl.style.setProperty("--hero-fill", "1");

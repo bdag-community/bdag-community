@@ -155,6 +155,47 @@ const WITH_NEWS_FORK = {
   tail: { l: 552, t: 5160, r: 1993, b: 5310 },
 };
 
+test("the featured projects fork from the spotlight and rejoin at their own node", () => {
+  const input = {
+    ...WITH_NEWS_FORK,
+    news: NEWS_ROW.map((box) => ({ ...box, t: box.t + 840, b: box.b + 840 })),
+    tail: { ...WITH_NEWS_FORK.tail, t: 6100, b: 6250 },
+    projects: {
+      spotlight: { l: 585, t: 4480, r: 1961, b: 4780 },
+      cards: [
+        { l: 585, t: 4800, r: 1263, b: 5160 },
+        { l: 1283, t: 4800, r: 1961, b: 5160 },
+      ],
+      hub: { l: 1237, t: 5232, r: 1309, b: 5304 },
+    },
+  };
+  const circuit = buildCircuit(input);
+  assert.equal(circuit.arms.length, 6, "participation, featured projects and news have two arms each");
+  const arms = circuit.arms.slice(2, 4);
+  for (const [index, arm] of arms.entries()) {
+    const card = input.projects.cards[index];
+    const midX = (card.l + card.r) / 2;
+    assert.deepEqual(arm.points.slice(0, 2), [midX, input.projects.spotlight.b]);
+    assert.deepEqual(pointAtLen(arm.points, arm.lens, arm.start + 200), [midX, input.projects.spotlight.b + 200]);
+    const [x, y] = pointAtLen(arm.points, arm.lens, arm.start + arm.len);
+    assert.ok(Math.abs(Math.hypot(x - 1273, y - 5268) - 36) < 0.01);
+  }
+  assert.ok(circuit.projectsHubAt < circuit.newsAt);
+  assert.ok(circuit.hidden.some(([from, to]) =>
+    Math.abs(from - circuit.projectsHubAt * circuit.len) < 0.01 && to - from === 72,
+  ));
+
+  const stacked = buildCircuit({
+    ...input,
+    projects: {
+      ...input.projects,
+      cards: [input.projects.cards[0], { ...input.projects.cards[0], t: 5180, b: 5500 }],
+    },
+  });
+  assert.equal(stacked.arms.length, 4);
+  assert.equal(stacked.projectsHubAt, Infinity);
+});
+
 /** How many spans the chain crosses without stroking: one per node block,
  *  plus one per framed section the route actually reached. */
 const crossings = (input) =>

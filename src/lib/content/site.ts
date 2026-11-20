@@ -1,3 +1,5 @@
+import { COMMUNITY_GITHUB_URL, COMMUNITY_CONTRIBUTING_URL, RELEASE_INDEX_URL, STACK_SOURCE_URL } from "../releases.ts";
+
 /**
  * Single source of truth for ALL site copy, product data, chain constants,
  * and external URLs (data only — no JSX). Pages import from here and never
@@ -179,12 +181,8 @@ export const MARKETS = [
 ] as const;
 
 /* ---------------------------------------------------------------------------
- * Community channels. `mock: true` renders the coming-soon treatment (handle
- * as inert text, "Invite coming soon" chip); `mock: false` publishes the URL
- * as a live invite link. Telegram went live 2026-08-13 with the group invite
- * the owner supplied; Reddit followed 2026-09-10 and LinkedIn on 2026-09-17.
- * Discord, X and GitHub stay coming-soon until they are provided; never flip
- * a flag without a real invite in hand.
+ * Community channels. A live channel carries a URL and handle. Coming-soon
+ * channels use `mock: true` until the community supplies their links.
  * ------------------------------------------------------------------------- */
 
 export const CHANNELS = [
@@ -205,6 +203,20 @@ export const CHANNELS = [
     handle: "Join the mining group",
     url: "https://t.me/+XTBIEkYZ1is5Zjg5",
     blurb: "Mining talk: X30 and X100 setup, pools, and payouts.",
+    mock: false,
+  },
+  {
+    name: "YouTube",
+    handle: "@BDAGCommunity",
+    url: "https://www.youtube.com/@BDAGCommunity",
+    blurb: "Videos and updates from BDAG Community.",
+    mock: false,
+  },
+  {
+    name: "X (Twitter)",
+    handle: "@1Bdag_Community",
+    url: "https://x.com/1Bdag_Community",
+    blurb: "Community announcements and network updates.",
     mock: false,
   },
   /* Temporarily hidden on Contact and Community pending Reddit verification
@@ -237,16 +249,45 @@ export const CHANNELS = [
     mock: true,
   },
   {
-    name: "X (Twitter)",
-    blurb: "Announcements, network updates, and news amplification.",
-    mock: true,
-  },
-  {
     name: "GitHub",
-    blurb: "Where the code lands as it is open-sourced.",
-    mock: true,
+    handle: "bdag-community",
+    url: COMMUNITY_GITHUB_URL,
+    blurb: "Browse the source, download releases and contribute changes.",
+    mock: false,
   },
 ] as const;
+
+export const OPEN_SOURCE = {
+  href: "/community#open-source",
+  title: "Build in the open",
+  body: "Browse the component repositories on GitHub. To suggest a change, fork the relevant repository and open a pull request against its develop branch.",
+  github: { label: "Browse GitHub repositories", href: COMMUNITY_GITHUB_URL },
+  contribute: { label: "Contribute to the website", href: COMMUNITY_CONTRIBUTING_URL },
+} as const;
+
+export const RELEASES_PAGE = {
+  href: "/releases",
+  title: "Stack releases",
+  description: "Download the BlockDAG Community Stack, verify SHA-256 checksums, and find the corresponding source and release notes.",
+  intro: "Download the software for running a BlockDAG node or mining pool. Choose the archive for your Linux system and check it against its SHA-256 file before you install.",
+  latest: "Latest published release",
+  history: "Release history",
+  notes: "Release notes on GitHub",
+  qualification: "What was tested",
+  checksum: "SHA-256",
+  downloads: {
+    amd64: { title: "Linux AMD64", detail: "For most 64-bit Intel and AMD systems.", label: "Download AMD64" },
+    arm64: { title: "Linux ARM64", detail: "For 64-bit ARM systems.", label: "Download ARM64" },
+    source: { title: "Corresponding source", detail: "Includes build inputs and third-party licence notices.", label: "Download source" },
+  },
+  all: { label: "All releases on GitHub", href: RELEASE_INDEX_URL },
+  source: { label: "Browse stack source", href: STACK_SOURCE_URL },
+  unavailable: "The latest release details are temporarily unavailable. Open GitHub for the published downloads and checksums.",
+  assetsUnavailable: "Open the GitHub release notes to check which archives and checksum files are available.",
+  historyUnavailable: "Release history is temporarily unavailable here.",
+  firstRelease: "Earlier stable releases will appear here as they are published.",
+  testnet: { label: "See the Testnet setup", href: "/testnet" },
+} as const;
 
 /** Official community inbox, verified by the owner on 2026-09-17. */
 export const CONTACT_EMAIL = "hello@bdag.community";
@@ -544,9 +585,8 @@ export const EXCHANGE_WARNING = {
 
 /* ---------------------------------------------------------------------------
  * Home — timeline
- * Dates: Genesis is verified on-chain. The exchange launch and endpoint
- * divergence were confirmed to exact days on 2026-08-13, so every event now
- * carries `approx: false` and the approximate-date legend is gone. Set
+ * Dates: Genesis is verified on-chain. Every event has an exact date and
+ * carries `approx: false`. Set
  * `approx: true` on an event and restore the legend if a future date is
  * only estimated.
  * ------------------------------------------------------------------------- */
@@ -566,16 +606,22 @@ export const TIMELINE: readonly TimelineEvent[] = [
     body: "Block 0 of BlockDAG Mainnet is mined at 22:03 UTC. The canonical public chain history begins at that block.",
   },
   {
-    when: "9 March 2026",
-    approx: false,
-    title: "Launch on exchanges",
-    body: "BDAG becomes tradable on public venues including P2B, XT.COM, BitMart, and AscendEX.",
-  },
-  {
     when: "15 July 2026",
     approx: false,
     title: "A public endpoint diverges",
     body: "rpc.bdagscan.com reports chain ID 1404, but its historical block hashes diverge from the canonical endpoint. The live node board checks that distinction rather than trusting chain ID alone.",
+  },
+  {
+    when: "1 November 2026",
+    approx: false,
+    title: "Community Testnet opens",
+    body: "The Community Testnet is available, and testers try the Development and Staking platforms and share their feedback.",
+  },
+  {
+    when: "8 November 2026",
+    approx: false,
+    title: "DAO and Staking V2 Mainnet rollout begins",
+    body: "The first Mainnet nodes move to the new release. The release will be made public once those nodes have demonstrated stable operation.",
   },
 ] as const;
 
@@ -586,8 +632,8 @@ export const TIMELINE_SECTION = {
   // The rail's live terminal: history ends at a pulsing "now".
   now: {
     when: "Today",
-    title: "The canonical chain, live",
-    body: "The live readings above show the current canonical head, measured block interval, public node responses, and the limits of what those sources can verify.",
+    title: "Exchange listings are next",
+    body: "Once the DAO and Staking V2 upgrade is complete and stable, we’ll start exploring exchange listings. The live readings above show how the chain is progressing today.",
   },
 } as const;
 
@@ -640,16 +686,8 @@ export const DEVELOPMENT_SECTION = {
   eyebrow: "Build",
   title: "The chain is an invitation",
   body:
-    "We want every developer, engineer, and participant with ideas to help create utility, improve the network, and use this chain optimally. A dedicated development hub is launching shortly at bdag.dev. The code will be open-sourced, and a DAO will facilitate improvements and fund projects through a community voting mechanism.",
-  /**
-   * The chip on the home card. It read "DAO + open source incoming", typed
-   * into <Participate>, which promised a delivery this site cannot date.
-   * "Planned" is the flag, and it is the reader-visible kind: neither the DAO
-   * nor the open-sourcing has happened yet, and the body above already says
-   * so in full. A chip that outruns the paragraph beneath it is the exact
-   * failure this file exists to prevent.
-   */
-  chip: "DAO and open source planned",
+    "We want every developer, engineer, and participant with ideas to help create utility, improve the network, and use this chain optimally. A dedicated development hub is launching shortly at bdag.dev. The community stack source is on GitHub. The DAO will help the community review, vote on and fund improvements.",
+  chip: "Open-source stack",
   cta: { label: "bdag.dev (launching shortly)", url: FAMILY_SITES.dev.url },
   /** The community is already building without waiting for the hub. This
    *  link surfaces those projects wherever the Build story renders (home
@@ -1224,7 +1262,7 @@ export const COMMUNITY_PAGE = {
   ],
   channelsTitle: "Where we talk",
   channelsNote:
-    "The Telegram groups and LinkedIn page are live. The other channels are still being finalised, and each invite will be published here when it opens.",
+    "Join the Telegram groups, follow community updates, and find our source and releases on GitHub.",
   /** The whole visible state of a `mock: true` channel: the full card wears
    *  it as the chip (and renders no handle line at all), the compact list
    *  shows it where a live channel shows its link. Placeholder handles are
@@ -1283,7 +1321,7 @@ export const COMMUNITY_PAGE = {
    * House style here, and it is deliberate: no em dashes, no "it is not X, it
    * is Y", no three-part flourishes. Plain sentences that tell someone what to
    * do. Nothing quotes a measured figure either: the release page is the
-   * source for the version, which is read from its manifest at render time.
+   * source for the version displayed here.
    */
   runNode: {
     eyebrow: "Run a node",
@@ -1298,12 +1336,12 @@ export const COMMUNITY_PAGE = {
       {
         n: "02",
         title: "Get the release",
-        body: "The release page always opens on the current community build and carries the documentation for it. Copy the link and open it, or paste it into an AI assistant and let it walk you through the install.",
+        body: "Find the current community build, its checksums and release notes. Choose the archive for your system.",
       },
       {
         n: "03",
         title: "Install and sync",
-        body: "Follow the instructions on the release page. Your node then reads the history from genesis and catches up to the head. Nothing here needs a hosting provider or an account with anyone. A node is finished once it is in sync and holding peers. Mining is a separate choice, and it has its own page.",
+        body: "Follow the installation instructions for the release you verified. Your node is ready when it is in sync and holding peers. You can run it without mining.",
       },
     ],
     hardware: {
@@ -1316,13 +1354,6 @@ export const COMMUNITY_PAGE = {
       storageNote:
         "A spinning disk cannot keep pace with the chain, so a node on one never finishes syncing.",
     },
-    /**
-     * The agent route. /mining-onboarding.md is GENERATED from CHAIN and the
-     * release manifest, so the endpoints and the release it names cannot drift
-     * from the rest of the site. It deliberately carries no install commands:
-     * the release page ships a signed, version-specific runbook, and a second
-     * copy of those steps here would go stale on the next release.
-     */
     agent: {
       title: "Recommended: let an agent do it",
       body: "Install an AI agent on the node, give it access to the machine, and point it at the release. Download the onboarding brief below and hand it over. It collects what only you know, your hardware and your storage, then walks the agent through installing the stack and syncing the chain.",
@@ -1337,28 +1368,11 @@ export const COMMUNITY_PAGE = {
       linkLabel: "Or give the agent this link",
       url: "https://bdag.community/node-onboarding.md",
     },
-    /**
-     * The release URL is the release page's ROOT, never a pinned version.
-     *
-     * A specific release was named here first and it was already superseded:
-     * the build it pointed at had been replaced two days after publication and
-     * the page had no way of knowing. The root always redirects to the current
-     * release, so it cannot go stale, and the version shown beside it is READ
-     * from that release's manifest at render time.
-     */
     release: {
-      label: "Release page",
-      /** Root, not a version. See the note above. */
-      url: "https://blockdagengineering.github.io/bdag-ipfs-release-page/",
-      /** Rendered only when the manifest could actually be read. */
-      currentLabel: "Current release",
-      unavailable:
-        "Open the release page for the version published right now.",
-      /** Older builds are not listed anywhere: the release page publishes no
-       *  index and the repository behind it is not public, so the honest thing
-       *  is to say the page carries the current one and stop there. */
-      historyNote:
-        "Only the current release is published. There is no archive of earlier builds.",
+      label: "Browse stack releases",
+      href: RELEASES_PAGE.href,
+      currentLabel: "Latest published release",
+      unavailable: "Open the releases page for published downloads and checksums.",
     },
   },
   waysTitle: "Ways to take part",
@@ -1377,9 +1391,9 @@ export const COMMUNITY_PAGE = {
     },
     {
       title: "Build with us",
-      body: "Utilities, tooling, integrations: bdag.dev and the DAO are landing soon.",
-      href: "/community#build",
-      cta: "What's coming",
+      body: "Explore the community repositories and propose improvements to the software.",
+      href: OPEN_SOURCE.href,
+      cta: "Explore open source",
     },
     {
       title: "Spread the word",
@@ -1477,7 +1491,7 @@ export const MINING_PAGE = {
       },
       {
         title: "Enable the mining profile",
-        body: "A fresh install defaults to sync-only with no miner. Turning the mining profile on is a separate, explicit choice, and it brings the pool with it. Give it a 0x reward address you control. It never needs a seed phrase or a private key.",
+        body: "Choose the mining pool deployment and let the node sync before connecting an ASIC. Use a public 0x reward address you control.",
       },
       {
         title: "Connect the miner",
@@ -1488,9 +1502,8 @@ export const MINING_PAGE = {
 
   /**
    * The agent route, same shape as Community's but for the full path. The
-   * brief is GENERATED at /mining-onboarding.md from CHAIN and the release
-   * manifest, and it carries no install commands of its own: the release page
-   * ships a signed, version-specific runbook and that is the authority.
+   * brief is generated at /mining-onboarding.md from the canonical network
+   * and the latest published stack release.
    */
   agent: {
     title: "Recommended: let an agent do it",
@@ -1506,8 +1519,9 @@ export const MINING_PAGE = {
   },
 
   endpoints: {
-    title: "Take the pool details from the release",
-    note: "An ASIC connects to a mining pool's Stratum endpoint, not the public JSON-RPC. The pool comes with the node's mining profile, so its configuration is in the release runbook rather than here. Mine to a 0x reward address you control, and do not inherit pool settings from an older guide.",
+    title: "Set up a mining pool",
+    release: { label: "Browse stack releases", href: RELEASES_PAGE.href },
+    note: "Connect your ASIC to the mining pool's Stratum endpoint. Use the configuration instructions for the stack release you installed and a public 0x reward address you control.",
     support: { label: "Miner details at bdag.co", url: FAMILY_SITES.miners.url },
     more: { label: "Open the chain reference", href: "/chain" },
   },
@@ -1609,9 +1623,7 @@ export const STAKING_PAGE = {
 
 /**
  * The questions the community actually fields, answered in the site's own
- * claims and nothing beyond them. Every answer ends at the page that carries
- * the evidence for it, because "check for yourself" is this site's whole
- * posture: an answer the reader cannot verify is just another countdown.
+ * Each answer points to the relevant evidence, guide or setup instructions.
  * Rules that bind this block: no venue endorsements, no fixed-return
  * language, no fork URLs, and the mining answer must carry the key-material
  * safety line reader-side.
@@ -1621,12 +1633,12 @@ export const FAQ_PAGE = {
   title: "FAQ",
   subtitle: "The questions the community answers every week.",
   intro:
-    "Short answers first, evidence second. Every answer ends at the page that carries the proof, so you can check rather than take our word.",
+    "Find out how to use the network, try Testnet and follow the rollout of Staking V2 and community governance.",
   items: [
     {
       id: "is-this-official",
       q: "Is this the official BlockDAG site?",
-      a: "No. bdag.community is an independent site run by the community that has operated the network since Genesis. It is not run by the team or parties that ran the original sales, and nothing here is financial advice.",
+      a: "bdag.community is an independent site run by the community that has operated the network since Genesis. It is not run by the team or parties that ran the original pre-sales and miner sales. Our goal is to make this chain better together.",
       more: { label: "Ask the operators", href: "/contact" },
     },
     {
@@ -1653,12 +1665,30 @@ export const FAQ_PAGE = {
     {
       id: "which-endpoints",
       q: "Which endpoints should I use?",
-      a: "The canonical RPC and explorer are listed on the chain page with the chain ID, ready to copy. Wallets, exchanges, and integrations should verify against those endpoints and settle on chain ID 1404.",
+      a: "Use the verified Mainnet RPC and explorer on the chain page for chain ID 1404. For testing apps or contracts, use the separate Community Testnet configuration on chain ID 1043.",
       long: [
         "Chain ID 1404 by itself is not enough, because the forked network reports 1404 too. The real check is to compare the block hash and state root at the same old block across two independently run RPCs, or better, to run your own node. The node board does this comparison for you.",
         "Be careful with anyone who asks you to switch your wallet to a different RPC to fix, secure, or upgrade something. Changing your endpoint is the usual way people get quietly routed onto the fork. Take the canonical endpoints from this site yourself rather than from a message.",
       ],
       more: { label: "Get the endpoints", href: "/chain#connect" },
+    },
+    {
+      id: "try-testnet",
+      q: "How can I try the Community Testnet?",
+      a: "Create a dedicated test wallet, add BDAG Community Testnet (chain ID 1043) and get test BDAG from the faucet. Use the same account to try staking, explore the Development platform and test community apps.",
+      more: { label: "Set up your Testnet wallet", href: "/testnet#network" },
+    },
+    {
+      id: "testnet-faucet",
+      q: "How do I get test BDAG?",
+      a: "Enter your public Testnet wallet address on the faucet page and complete the human verification. The faucet sends 1,000 test BDAG per wallet every 24 hours, subject to its daily cap. Test BDAG has no monetary value.",
+      more: { label: "Open the Testnet faucet", href: "/testnet#faucet" },
+    },
+    {
+      id: "testnet-node",
+      q: "Can I run a Community Testnet node?",
+      a: "Yes. Use the public seed listed on the Testnet page. Ask the team for the current verified Linux AMD64 build, paired snapshot and setup instructions. Verify the package signature, checksums and shared checkpoint before enabling mining.",
+      more: { label: "Read the Testnet node instructions", href: "/testnet#nodes" },
     },
     {
       id: "how-to-verify",
@@ -1706,54 +1736,65 @@ export const FAQ_PAGE = {
     {
       id: "how-upgrades-decided",
       q: "How are network upgrades decided? Do I get to vote?",
-      a: "Today, changes to the consensus rules take effect through miner signalling, not a public popularity vote. Miners signal support in the blocks they mine, and a rule only activates once a supermajority has signalled and a delay has passed. Miners can refuse to run software they do not accept.",
+      a: "Miners signal support for consensus upgrades in the blocks they mine. Each upgrade has a defined signalling window, threshold and activation delay. The Development platform gives eligible miners and stakers a separate way to vote on community proposals.",
       long: [
-        "The reviewed mechanism uses a 2,000 block signalling window, a 75 percent threshold, and a further activation delay. That is how the current enforcement rules were adopted, with roughly 1,514 of 2,000 blocks signalling support. Signalling that a framework is adopted is not the same as a separate vote on every later decision made under it.",
-        "A broader community vote is on the roadmap, weighted toward miners and stakers by the rewards they earn, but it is not live yet. Until then the honest description is miner signalling for consensus, with admin roles still held by their current owners.",
+        "An earlier enforcement upgrade reached 1,514 signals in a 2,000-block window. Check the published release instructions for the parameters of a new upgrade.",
+        "A DAO vote can approve a proposal. Changes to consensus rules also follow the network upgrade process.",
       ],
-      more: { label: "See the node board", href: "/chain#nodes" },
+      more: { label: "Read the community governance guide", href: "/guides/dao-and-development" },
     },
     {
       id: "roadmap-to-dao",
       q: "Is control moving to the community?",
-      a: "That is the stated direction. The plan is to publish the node software and its build hashes, move the admin roles to a disclosed multisig with a timelock, complete audits, and then hand control to a DAO whose voting weight is 70 percent miners and 30 percent stakers, based on rewards earned. Until the on-chain transfers happen, treat it as a roadmap.",
+      a: "That is the goal of the phased DAO rollout. Phase 1 gives the community a process to propose improvements, review work and vote. You can try the Development platform on Testnet today. The Mainnet release will confirm the roles and permissions that apply in production.",
       long: [
-        "Voting weight would come from rewards actually earned, not from raw wallet balances, so the genesis allocation does not get an automatic say and the people securing the chain do.",
-        "Consensus changes would still need miners to signal and run the software, so a governance vote could authorise an action without ever overriding independent miners. Both approvals being required is the point.",
+        "Network-wide CORE proposals use both voting groups. The Phase 1 rules combine 70 percent mining support and 30 percent staking support, with each group meeting its own requirements. Mining-only and staking-only proposals go to their respective groups.",
       ],
-      more: { label: "Take part", href: "/community#participate" },
+      more: { label: "Explore the DAO and Development guide", href: "/guides/dao-and-development" },
+    },
+    {
+      id: "earn-voting-power",
+      q: "How do I earn DAO voting power?",
+      a: "Eligible mining or Staking V2 rewards earned in one epoch give you voting power in the following epoch. Your voting power expires when that voting epoch ends. The Development platform shows your eligibility and available votes. Claiming a voting receipt is optional.",
+      more: { label: "See what you can test in Development", href: "/testnet#platforms" },
     },
     {
       id: "is-code-open-source",
       q: "Is the node software open source? Can I run it myself?",
-      a: "You can already run a node and verify the chain yourself today, and open sourcing the node software with tagged releases and published binary hashes is on the roadmap. For now the engineering repository is access controlled, which is described as a deliberate security measure with a curated group of contributors from the developer and mining community.",
-      long: [
-        "The important point is that verification does not wait on the source being public. Anyone can run a node, read the chain, and compare block hashes and state roots against independent RPCs. That is how the claims on this site can be checked right now.",
-        "Publishing the source with release tags and binary hashes is the stronger, longer term step, and it is planned rather than finished. We would rather say that plainly than imply the code is already fully open.",
-      ],
-      more: { label: "Take part", href: "/community#participate" },
+      a: "Yes. The BlockDAG Community Stack source is public. The release page has Linux packages, corresponding source and SHA-256 verification files. You can use them to run your own node and verify the chain yourself.",
+      more: { label: "See downloads and source", href: RELEASES_PAGE.href },
     },
     {
       id: "staying-safe",
       q: "How do I keep myself safe, and what should I never do?",
       a: "The community, and any real mining, staking, or claim step, will never ask for your seed phrase, private key, or recovery code. Treat any such request as a scam. Be just as careful with anyone telling you to switch your RPC, migrate, or unstake to secure, upgrade, or claim your BDAG, because that is how people get routed onto the fork or drained. The community will never message you asking you to move your funds.",
       long: [
-        "No verified migration or claim route exists right now, so nobody can legitimately require you to sign one. If you ever do sign a real transaction, take the endpoints and contract address from this site yourself, check the address, and simulate the transaction first.",
+        "For any wallet action, open the relevant platform from this site and verify the network, destination and action in your wallet before signing. Follow the published Mainnet release instructions for Legacy and V2 staking.",
         "Keep your own records instead of handing over control: your wallet addresses, transaction hashes, the RPC you used, the time you read it, the block number and hash, and any receipts. If you need help with a specific balance or purchase, share those details through a private support channel, never in a public group where anyone can copy them.",
-        "A simple test for any process that asks you to sign: a legitimate migration, claim, or unstake should publish who is responsible, the exact contract, the snapshot or checkpoint it uses, the eligibility rule, and its funding source before anyone signs. Anything missing those is not a verified process.",
+        "For any new migration or claim relating to an old purchase, verify who operates it, which contract it uses and what the eligibility rules are before signing.",
       ],
       more: { label: "Ask the operators", href: "/contact" },
     },
     {
       id: "can-i-stake",
       q: "Can I stake right now?",
-      a: "You can reach the current platform, but we do not recommend staking on it. It still has known issues from the previous release, specifically with claiming, and a new staking page with a new contract is being built to fix them, including a way out of the current one. If you have staked before, the current platform will at least show you that your stake is still there. The staking page tracks the state and will carry the announcement when the new release is ready.",
-      long: [
-        "Your staked BDAG sits inside the staking contract, not in anyone's personal wallet. The contract exposes no owner function that sweeps or withdraws the pool, and a plain transfer out of it is not possible. Value leaves only through the contract's own unstake and claim paths.",
-        "The honest caveat for advanced users. The staking contract is an upgradeable proxy, and its owner is a single externally owned account. That owner cannot take funds today, but it can replace the contract logic, so the safety of the pool depends on that key staying secure and, over time, moving to audited community governance. You can read the owner and the current implementation on-chain, and the staking address is not yet confined to approved payout destinations, which is exactly why the owner key is the live risk rather than a direct sweep.",
-        "One safety rule for when the new release lands. Any real migration or exit will be announced on this staking page, so treat any message, DM, or other site telling you to unstake, migrate, switch your RPC, or re-stake to secure or upgrade your BDAG as a scam. A genuine transition will publish the exact contract address, matching deployed code, completed audits, and an on-chain ownership transfer before it ever asks you to sign. Never sign because a chat post told you to.",
-      ],
+      a: "You can try Staking V2 today on Community Testnet, including choosing a pool, staking, unstaking and claiming. On Mainnet, the Legacy platform can show your existing position. We do not recommend staking on it because of known claiming issues. Watch the staking page for the production V2 launch.",
       more: { label: "Read the staking status", href: "/staking" },
+    },
+    {
+      id: "legacy-staking-withdrawals",
+      q: "What happens to my existing Legacy stake?",
+      a: "Under the Mainnet rollout plan, Legacy V1 keeps its current contract on chain ID 1404. To withdraw, unstake, wait for the existing unbonding period and claim your available BDAG back to your wallet. If you choose to stake in the separate V2 contract, that starts a fresh bonding period.",
+      long: [
+        "We tested both flows on the same Community Testnet, including a complete unstake and claim from each contract. The platform shows when each withdrawal becomes available.",
+      ],
+      more: { label: "Read the Legacy and V2 staking guide", href: "/guides/staking-and-dao" },
+    },
+    {
+      id: "staking-pool-offline",
+      q: "Can I withdraw my V2 stake if my mining pool goes offline?",
+      a: "Yes. Your V2 position is held by the staking contract. You can request an unstake, wait for any applicable bonding and unbonding periods, then claim through the contract even if the pool stops mining. Future rewards depend on the pool producing eligible blocks.",
+      more: { label: "See how V2 withdrawals work", href: "/guides/staking-v2" },
     },
     {
       id: "how-to-mine",
@@ -1773,12 +1814,11 @@ export const FAQ_PAGE = {
     },
     {
       id: "current-supply",
-      q: "What is the current BDAG supply?",
-      a: "Read at a fixed checkpoint on 25 August 2026, roughly 104.7 billion BDAG had been issued in total, of which about 27 billion sat in frozen wallets. Taking those out leaves an effective available supply of about 77.7 billion before other locks. These are dated, reproducible estimates, not fixed promises, and anyone running a node can check them.",
+      q: "How should I read BDAG supply figures?",
+      a: "Check the date, block height and definition behind any supply figure. Issued supply includes the genesis allocation and rewards already created. Effective available supply deducts frozen balances and can change with what the calculation counts as locked.",
       long: [
         "Four different numbers get mixed up, so it helps to separate them. Genesis supply is the 100 billion created at launch. Issued supply is genesis plus all mining and staking rewards actually created. Effective circulating supply is issued supply minus what is frozen, staked, vested, or otherwise unavailable. Maximum supply is the most that current rules could ever produce.",
         "Frozen balances are conditionally excluded, not destroyed. They still exist and could move again if a future community decision unfreezes them, so a good dashboard labels them frozen, never burned.",
-        "Under the current rules, only a bounded amount can still be created, on the order of 46 billion more, and the exact lifetime maximum is being finalised from the code before it is published as a single number. Every figure here comes with its block number, block hash, state root, and the time it was read, so you can reproduce it rather than trust it.",
       ],
       more: { label: "Watch the live readout", href: "/chain#live" },
     },
@@ -1825,7 +1865,7 @@ export const FAQ_PAGE = {
     {
       id: "buy-on-exchange",
       q: "Can I buy BDAG on an exchange?",
-      a: "This site does not endorse venues and does not give financial advice. The check that matters is simple: a venue handling real BDAG settles on chain ID 1404 through the canonical endpoints, and the chain page carries the warning exchanges need to read.",
+      a: "The community plans to explore exchange listings once the DAO and Staking V2 upgrade is stable. This site does not endorse venues. If you are checking an existing BDAG market, verify that the venue supports deposits and withdrawals on the community’s Mainnet using the chain page.",
       long: [
         "The chain ID check is necessary but not enough, because the forked network also reports chain ID 1404. A venue handling real BDAG should pin fixed checkpoints, the genesis hash, the block 316,002 hash, and a recent community head, and verify them against independent RPCs before crediting deposits or releasing withdrawals.",
         "Whether a specific balance or purchase is safe, and whether you can claim, is a separate question that depends on the venue or the original issuer, not on this community. The exchange warning and the claims answer on this page cover that.",
@@ -1846,13 +1886,13 @@ export const FAQ_PAGE = {
     {
       id: "how-can-i-help",
       q: "How can I help?",
-      a: "Run a node, point a miner at the pool, write for the news section, or send the operators what you know. The community page lists every way to take part in one place.",
+      a: "Test Staking and Development, report what you find, run a node, contribute an article or submit a project. For feedback, tell us which page you were using, what you tried and what happened.",
       more: { label: "Take part", href: "/community#participate" },
     },
     {
       id: "community-built",
       q: "What has the community built?",
-      a: "Explorers, dashboards, mining pools, and tools, all run by people in this community. The projects view lists every vetted project, and anyone can submit their own for review.",
+      a: "Community projects include explorers, dashboards, mining pools, verification tools and browser gaming. Browse the project directory or submit your own BlockDAG project for review.",
       more: { label: "See community projects", href: "/community/projects" },
     },
   ],
@@ -2391,6 +2431,7 @@ export const CONTACT_PAGE = {
       "Mining",
       "Staking",
       "Development",
+      "Gaming",
       "Exchanges and integrators",
       "Press",
       "AMA",
@@ -2454,4 +2495,57 @@ export const ROUTE_STATES = {
     home: "Back to the public site",
   },
   reference: "Reference",
+} as const;
+
+/* Shared Community Testnet. Public wallet data only; node admission stays private. */
+export const TESTNET = {
+  title: "Testnet",
+  subtitle: "Try what comes next, together",
+  intro: "Our shared testing ground for Staking V2, community governance and apps built on BlockDAG. Explore the platforms, try the journeys and help us improve them before Mainnet.",
+  description: "Connect to BDAG Community Testnet, try Staking V2 and DAO proposals, and find the network configuration and node access steps for chain 1043.",
+  notice: "Test BDAG has no monetary value. This is a separate network from Mainnet. Use a dedicated test wallet and never send real BDAG to it.",
+  network: {
+    name: "BDAG Community Testnet", chainId: 1043, chainIdHex: "0x413",
+    currency: { name: "Test BDAG", symbol: "BDAG", decimals: 18 },
+    rpcUrl: "https://testnet-staking.bdag.co/rpc",
+    fallbackRpcUrl: "https://testnet-api.bdag.co/rpc",
+    nativeGenesis: "0x06d7950592aa0319de5e81bc29a7ac283010274a5ca2561f319ab1bdb8b222df",
+    evmGenesis: "0x58d97c1c16a3ff988105c2bd101b2f473103cc2ef7106ade3296647de65a1663",
+    evmGenesisStateRoot: "0xba6c20f5d0f78f8f636d6f96888608b06e81398efb2f5b8163c695229d8e4488",
+  },
+  setup: {
+    eyebrow: "Your wallet, connected",
+    title: "Add the testing network",
+    body: "Use the button in a browser with MetaMask, or add the network manually with the details alongside it. On a phone, open this page inside MetaMask’s browser.",
+    add: "Add to MetaMask", pending: "Check your wallet…",
+    sent: "Network details sent to your wallet. Complete its prompt, then select BDAG Community Testnet.",
+    manual: "Manual setup works too: in MetaMask, open Networks → Add a custom network and enter these values. The currency symbol is BDAG. The network name and chain ID distinguish these test coins from Mainnet.",
+    steps: [
+      { title: "Use a test account", body: "Create a fresh account, or import the test wallet you received privately from the team. Keep its private key or recovery phrase to yourself." },
+      { title: "Add chain 1043", body: "Approve the network details in your wallet. Select BDAG Community Testnet before connecting to either testing platform." },
+      { title: "Get test BDAG", body: "Request test funds from the faucet below, then connect to a platform. You can use the same account for Staking and Development." },
+    ],
+    explorer: "There is no dedicated Testnet explorer yet. Leave the explorer field blank and use your wallet’s Activity view for transaction details. Mainnet explorers do not show this chain.",
+  },
+  labels: { name: "Network name", chain: "Chain ID", currency: "Currency symbol", rpc: "Primary RPC", fallback: "Alternative RPC", fingerprint: "Network fingerprint", nativeGenesis: "Native genesis hash", genesis: "EVM genesis hash", stateRoot: "Genesis state root" },
+  platformsTitle: "Put it to the test",
+  platformsIntro: "Both platforms use the same network and account. Every balance, stake and proposal here is for testing.",
+  platforms: [
+    { kind: "staking", title: "Staking", tag: "Legacy + Staking V2", body: "Choose a pool, stake test BDAG, follow rewards and try unstaking and claiming. Existing Legacy positions can exit on the same network while your new V2 stake stays separate.", href: "https://testnet-staking.bdag.co/", cta: "Try Staking", detail: "New V2 stakes start their own bonding period. The app reads the waiting periods from the chain." },
+    { kind: "development", title: "Development", tag: "Community proposals + DAO", body: "Explore proposals, check earned voting power and try the community review process. Register as a developer, follow decisions and see how accepted work moves forward.", href: "https://testnet-development.bdag.co/", cta: "Try Development", detail: "Voting power comes from eligible rewards. It becomes usable in the following voting epoch and expires when that epoch ends." },
+  ],
+  operators: {
+    eyebrow: "Help run the network", title: "Bring a node to Testnet",
+    body: "Connect through our public seed without ZeroTier or individual peer approval. Get the verified Testnet build and paired chain snapshot from the team, then follow its installation guide.",
+    publicSeed: "/ip4/154.70.222.46/tcp/18160/p2p/16Uiu2HAmD78L3GVeqrXN4M2nk9fRmYZxrNC9vddWY5W2mbpSir2Z",
+    steps: [
+      { title: "Prepare your device", body: "Use a supported Linux AMD64 device with an SSD and enough space for both chain databases. Keep your node identity and backups private." },
+      { title: "Receive the current package", body: "The team supplies the approved build, verification details and setup instructions for this network. Verify the signature and checksums before installing." },
+      { title: "Join and verify", body: "Connect to the public seed below, then verify the genesis and a shared checkpoint. Keep mining disabled until synchronization and mining checks pass." },
+    ],
+    cta: "Ask about running a node", href: "/contact",
+    note: "This is a node-to-node connection, not a wallet RPC. The verified package and paired snapshot are supplied by the team. Downloads are not yet self-service. Existing nodes can keep their configuration. The X30 continues mining for now. CPU and GPU mining will be qualified separately.",
+  },
+  feedback: { title: "Help make the next release better", body: "Collect your findings in one message: the page, steps you followed, what you expected and what happened. Include your browser and transaction hash when available. Never include a private key or recovery phrase.", cta: "Send feedback", href: "/contact" },
+  link: { title: "Try it on Testnet", body: "Explore Staking V2 and the Development platform with test BDAG. Wallet setup and access details are on our Testnet page.", cta: "Explore Testnet", href: "/testnet" },
 } as const;

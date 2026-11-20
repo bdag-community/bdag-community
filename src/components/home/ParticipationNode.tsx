@@ -1,10 +1,9 @@
 /**
- * The participation hub — the hero's block, one size down.
+ * A merge node — the hero's block, one size down.
  *
- * The two ways to take part fork the chain; this is where they come back
- * together. Both arms leave their card on a straight diagonal and land on this
+ * Both arms leave their card on a straight diagonal and land on this
  * rim (geometry.ts, `hub`), the node carries the chain across its own height
- * the way a stats cell does, and a single line leaves the bottom for News.
+ * the way a stats cell does, and a single line leaves the bottom.
  *
  * Deliberately dumber than <HeroNode>: no charge, no fill, no discharge, no
  * per-frame custom properties. <Spine> flips ONE class on it when both arms
@@ -12,10 +11,17 @@
  * client component. It is decorative, and the chain it completes is already
  * described by the sections either side of it, so it is aria-hidden.
  */
-export function ParticipationNode() {
+export function ParticipationNode({
+  section = "participation",
+}: {
+  section?: "participation" | "projects";
+}) {
   return (
-    <div aria-hidden className="hub-node-row">
-      <span data-spine-hub className="hub-node">
+    <div
+      aria-hidden
+      className={section === "projects" ? "hub-node-row hub-node-row--projects" : "hub-node-row"}
+    >
+      <span data-spine-hub={section} className="hub-node">
         <span className="hub-node-glass">
           <span className="hub-node-energy" />
           <span className="hub-node-mark">

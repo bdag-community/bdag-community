@@ -9,6 +9,7 @@ import {
   CHANNELS,
   CONTACT_EMAIL,
   CONTACT_EMAIL_MOCK,
+  RELEASES_PAGE,
   RISK_SMALL_PRINT,
   SITE,
 } from "@/lib/content/site";
@@ -28,6 +29,8 @@ const COLUMNS = [
       { label: "Mining", href: "/mining" },
       { label: "Staking", href: "/staking" },
       { label: "Projects", href: "/community/projects" },
+      { label: "Testnet", href: "/testnet" },
+      { label: RELEASES_PAGE.title, href: RELEASES_PAGE.href },
     ],
   },
   {
@@ -56,6 +59,10 @@ const NETWORK_LINK =
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent " +
   "focus-visible:ring-offset-2 focus-visible:ring-offset-base-void";
+
+const SOCIAL_CHANNELS = CHANNELS.filter(
+  (channel) => channel.name === "YouTube" || channel.name === "X (Twitter)" || channel.name === "GitHub",
+);
 
 export function Footer() {
   return (
@@ -97,6 +104,21 @@ export function Footer() {
                 {CONTACT_EMAIL}
               </a>
             ) : null}
+            <ul aria-label="Follow BDAG Community" className="flex flex-wrap gap-x-5 text-sm">
+              {SOCIAL_CHANNELS.map((channel) => (
+                <li key={channel.name}>
+                  <a
+                    href={channel.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex min-h-[44px] items-center gap-1.5 ${LINK}`}
+                  >
+                    {channel.name}
+                    <ArrowUpRight className="size-3.5" strokeWidth={1.75} aria-hidden />
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
 
           {/* Page-link columns */}
@@ -170,19 +192,6 @@ export function Footer() {
                 {CHAIN.genesisLabel}
               </li>
             </ul>
-            <p className="text-xs text-on-surface-variant">
-              {CHANNELS.filter((c) => c.mock)
-                .map((c) => c.name)
-                .join(", ")}{" "}
-              are coming soon.{" "}
-              <Link
-                href="/community"
-                className={`inline-flex min-h-[44px] items-center underline underline-offset-2 ${LINK}`}
-              >
-                Find us here
-              </Link>
-              .
-            </p>
           </div>
         </div>
 

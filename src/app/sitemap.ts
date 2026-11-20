@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { NAV_LINKS, SITE } from "@/lib/content/site";
+import { NAV_LINKS, RELEASES_PAGE, SITE } from "@/lib/content/site";
 import { getPublishedArticles } from "@/lib/news";
 import { COMMUNITY_GUIDES } from "@/lib/content/community-guides";
 
@@ -43,6 +43,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // it rides along here the same way article pages do: a known route that is
   // not in NAV_LINKS but should still be crawled.
   const projectsView = [
+    { url: new URL(RELEASES_PAGE.href, SITE.url).toString(), changeFrequency: "weekly" as const, priority: 0.8 },
+    { url: new URL("/testnet", SITE.url).toString(), changeFrequency: "weekly" as const, priority: 0.7 },
     {
       url: new URL("/community/projects", SITE.url).toString(),
       changeFrequency: "weekly" as const,

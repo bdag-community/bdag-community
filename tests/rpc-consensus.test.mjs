@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";
+import { registerHooks } from "node:module";
 import { test } from "node:test";
 
 const consensusUrl = new URL(
@@ -361,6 +362,7 @@ test("the automatic source registry is fixed, operator-aware and excludes unsafe
     "https://rpc.england.bdag-us.org/",
     "https://rpc.capedag.com/",
     "https://rpc.bdagexplorer.com/",
+    "https://rpc.blockdag.solutions/",
   ]) {
     assert.ok(source.includes(expected), `missing fixed source ${expected}`);
   }
@@ -368,30 +370,92 @@ test("the automatic source registry is fixed, operator-aware and excludes unsafe
   assert.match(source, /id:\s*"bdag-us-west"[\s\S]*?operatorId:\s*"bdag-us"[\s\S]*?rpc\.west\.bdag-us\.org/);
   assert.match(source, /id:\s*"bdag-us-brazil"[\s\S]*?operatorId:\s*"bdag-us"[\s\S]*?rpc\.brazil\.bdag-us\.org/);
   assert.match(source, /id:\s*"bdag-us-england"[\s\S]*?operatorId:\s*"bdag-us"[\s\S]*?rpc\.england\.bdag-us\.org/);
-  for (const automaticId of ["canonical-rpc", "rms", "cms"]) {
+  for (const automaticId of [
+    "canonical-rpc",
+    "rms",
+    "cms",
+    "bdag-us-east",
+    "bdagexplorer",
+    "blockdag-solutions",
+  ]) {
     assert.match(
       source,
-      new RegExp(`id:\\s*"${automaticId}"[\\s\\S]*?automatic:\\s*true`),
+      new RegExp(`id:\\s*"${automaticId}"[^}]*automatic:\\s*true`),
     );
   }
   for (const manualId of [
     "dvdmining",
-    "bdag-us-east",
     "bdag-us-west",
     "bdag-us-brazil",
     "bdag-us-england",
     "capedag",
-    "bdagexplorer",
     "welshdag",
   ]) {
     assert.match(
       source,
-      new RegExp(`id:\\s*"${manualId}"[\\s\\S]*?automatic:\\s*false`),
+      new RegExp(`id:\\s*"${manualId}"[^}]*automatic:\\s*false`),
     );
   }
   assert.match(source, /rpc\.welshdag\.trade[\s\S]*?automatic:\s*false/);
   assert.doesNotMatch(source, /rpc\.bdagscan\.com|rpc\.blockdag\.works/);
   assert.doesNotMatch(source, /process\.env|EXPLORER_PROXY_BASE|RPC_URL/);
+});
+
+test("homepage stats can resolve an independent community quorum during a primary outage", async () => {
+  const localImports = new Map([
+    ["server-only", "data:text/javascript,export%20%7B%7D"],
+    ["@/lib/chain/rpc-consensus", consensusUrl.href],
+    ["@/lib/chain/rpc-batching", batchingUrl.href],
+  ]);
+  const hooks = registerHooks({
+    resolve(specifier, context, nextResolve) {
+      const url = context.parentURL === sourcesUrl.href && localImports.get(specifier);
+      return url ? { url, shortCircuit: true } : nextResolve(specifier, context);
+    },
+  });
+  let prober;
+  try {
+    prober = await import(sourcesUrl.href);
+  } finally {
+    hooks.deregister();
+  }
+
+  const head = 28_994_000;
+  const headHash = `0x${"c".repeat(64)}`;
+  const peers = new Map([
+    ["rpc.east.bdag-us.org", "0x16"],
+    ["rpc.bdagexplorer.com", "0x17"],
+    ["rpc.blockdag.solutions", "0x18"],
+  ]);
+  const hex = (value) => `0x${value.toString(16)}`;
+  const fetchRpc = async (url, options) => {
+    const host = new URL(url).hostname;
+    if (!peers.has(host)) throw new Error("RPC unavailable");
+    const results = {
+      eth_chainId: "0x57c",
+      eth_blockNumber: hex(head),
+      eth_syncing: false,
+      net_peerCount: peers.get(host),
+    };
+    const replies = JSON.parse(options.body).map(({ id, method, params }) => ({
+      jsonrpc: "2.0",
+      id,
+      result: method === "eth_getBlockByNumber"
+        ? { number: params[0], hash: params[0] === hex(18_400_000) ? PINNED_HASH : headHash }
+        : results[method],
+    }));
+    return Response.json(replies);
+  };
+  const { consensus } = await prober.probeAutomaticRpcSources(fetchRpc);
+  assert.equal(consensus?.blockHeight, head);
+  assert.equal(consensus.blockHash, headHash);
+  assert.equal(consensus.support, 3);
+  assert.equal(consensus.peerCount, 23);
+  assert.deepEqual(consensus.memberSourceIds, [
+    "bdag-us-east",
+    "bdagexplorer",
+    "blockdag-solutions",
+  ]);
 });
 
 test("the prober isolates core liveness from optional peer and sync methods", () => {
