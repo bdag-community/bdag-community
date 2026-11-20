@@ -12,3 +12,8 @@ The production server holds the application's runtime configuration.
 An authorised maintainer can dispatch the workflow on `main` with **Verify
 package on Xneelo without deploying** for a staging check. Use **Publish this
 build to the approved site** to retry a missed automatic deployment.
+
+If a promotion PR is missing its `bdag/promotion-source` check, run **Validate
+production promotion source** from `develop` and enter the PR number. The
+workflow checks the current PR source and reports the result for its test
+merge commit. The regular review and application checks still apply.
