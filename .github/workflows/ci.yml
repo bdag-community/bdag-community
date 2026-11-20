@@ -83,7 +83,7 @@ jobs:
           (cd release && sha256sum frontend.tar.gz > SHA256SUMS)
       - uses: actions/upload-artifact@v4
         with:
-          name: frontend-${{ github.ref_name }}-${{ github.sha }}
+          name: frontend-${{ github.sha }}
           path: release/
           if-no-files-found: error
           retention-days: 7
@@ -102,7 +102,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: frontend-${{ github.ref_name }}-${{ github.sha }}
+          name: frontend-${{ github.sha }}
           path: release
       - name: Verify and send package over the dedicated deployment connection
         env:
