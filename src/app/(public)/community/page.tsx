@@ -1,3 +1,4 @@
+import { TestnetLink } from "@/components/testnet/TestnetLink";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Download, ShieldCheck } from "lucide-react";
@@ -153,6 +154,7 @@ export default async function CommunityPage() {
               </RevealItem>
             ))}
           </RevealGroup>
+          <TestnetLink />
         </div>
       </Section>
 

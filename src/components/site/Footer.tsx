@@ -28,6 +28,7 @@ const COLUMNS = [
       { label: "Mining", href: "/mining" },
       { label: "Staking", href: "/staking" },
       { label: "Projects", href: "/community/projects" },
+      { label: "Testnet", href: "/testnet" },
     ],
   },
   {

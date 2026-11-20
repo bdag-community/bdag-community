@@ -5,6 +5,7 @@ import {
   NAV_LINKS,
   NON_AFFILIATION,
   SITE,
+  TESTNET,
 } from "@/lib/content/site";
 import { getPublishedArticles } from "@/lib/news";
 
@@ -65,6 +66,10 @@ A separate operation runs a fork behind a central RPC. Chain ID ${CHAIN.chainId}
 network this community has run since Genesis. Live readings for both are on
 ${SITE.url}/chain, which is also the page that states what the site cannot
 measure.
+
+## Community Testnet
+
+${SITE.url}/testnet describes the separate testing network: chain ID ${TESTNET.network.chainId}, RPC ${TESTNET.network.rpcUrl}. Test coins have no monetary value. Node participation requires coordinated approval. This is separate from Mainnet ${CHAIN.chainId}.
 
 ## Sibling site
 

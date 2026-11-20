@@ -7,7 +7,8 @@ export type PublicSubmissionAction =
   | "submit_article"
   | "submit_suggestion"
   | "contact_message"
-  | "submit_project";
+  | "submit_project"
+  | "testnet_faucet";
 
 type ProtectionDependencies = {
   fingerprint: (scope: SubmissionRateScope) => Promise<string | null>;
