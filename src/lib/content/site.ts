@@ -1,3 +1,5 @@
+import { COMMUNITY_GITHUB_URL, COMMUNITY_CONTRIBUTING_URL, RELEASE_INDEX_URL, STACK_SOURCE_URL } from "../releases.ts";
+
 /**
  * Single source of truth for ALL site copy, product data, chain constants,
  * and external URLs (data only — no JSX). Pages import from here and never
@@ -248,10 +250,44 @@ export const CHANNELS = [
   },
   {
     name: "GitHub",
-    blurb: "Where the code lands as it is open-sourced.",
-    mock: true,
+    handle: "bdag-community",
+    url: COMMUNITY_GITHUB_URL,
+    blurb: "Browse the source, download releases and contribute changes.",
+    mock: false,
   },
 ] as const;
+
+export const OPEN_SOURCE = {
+  href: "/community#open-source",
+  title: "Build in the open",
+  body: "Browse the component repositories on GitHub. To suggest a change, fork the relevant repository and open a pull request against its develop branch.",
+  github: { label: "Browse GitHub repositories", href: COMMUNITY_GITHUB_URL },
+  contribute: { label: "Contribute to the website", href: COMMUNITY_CONTRIBUTING_URL },
+} as const;
+
+export const RELEASES_PAGE = {
+  href: "/releases",
+  title: "Stack releases",
+  description: "Download the BlockDAG Community Stack, verify SHA-256 checksums, and find the corresponding source and release notes.",
+  intro: "Download the software for running a BlockDAG node or mining pool. Choose the archive for your Linux system and check it against its SHA-256 file before you install.",
+  latest: "Latest published release",
+  history: "Release history",
+  notes: "Release notes on GitHub",
+  qualification: "What was tested",
+  checksum: "SHA-256",
+  downloads: {
+    amd64: { title: "Linux AMD64", detail: "For most 64-bit Intel and AMD systems.", label: "Download AMD64" },
+    arm64: { title: "Linux ARM64", detail: "For 64-bit ARM systems.", label: "Download ARM64" },
+    source: { title: "Corresponding source", detail: "Includes build inputs and third-party licence notices.", label: "Download source" },
+  },
+  all: { label: "All releases on GitHub", href: RELEASE_INDEX_URL },
+  source: { label: "Browse stack source", href: STACK_SOURCE_URL },
+  unavailable: "The latest release details are temporarily unavailable. Open GitHub for the published downloads and checksums.",
+  assetsUnavailable: "Open the GitHub release notes to check which archives and checksum files are available.",
+  historyUnavailable: "Release history is temporarily unavailable here.",
+  firstRelease: "Earlier stable releases will appear here as they are published.",
+  testnet: { label: "See the Testnet setup", href: "/testnet" },
+} as const;
 
 /** Official community inbox, verified by the owner on 2026-09-17. */
 export const CONTACT_EMAIL = "hello@bdag.community";
@@ -650,16 +686,8 @@ export const DEVELOPMENT_SECTION = {
   eyebrow: "Build",
   title: "The chain is an invitation",
   body:
-    "We want every developer, engineer, and participant with ideas to help create utility, improve the network, and use this chain optimally. A dedicated development hub is launching shortly at bdag.dev. The code will be open-sourced, and a DAO will facilitate improvements and fund projects through a community voting mechanism.",
-  /**
-   * The chip on the home card. It read "DAO + open source incoming", typed
-   * into <Participate>, which promised a delivery this site cannot date.
-   * "Planned" is the flag, and it is the reader-visible kind: neither the DAO
-   * nor the open-sourcing has happened yet, and the body above already says
-   * so in full. A chip that outruns the paragraph beneath it is the exact
-   * failure this file exists to prevent.
-   */
-  chip: "DAO and open source planned",
+    "We want every developer, engineer, and participant with ideas to help create utility, improve the network, and use this chain optimally. A dedicated development hub is launching shortly at bdag.dev. The community stack source is on GitHub. The DAO will help the community review, vote on and fund improvements.",
+  chip: "Open-source stack",
   cta: { label: "bdag.dev (launching shortly)", url: FAMILY_SITES.dev.url },
   /** The community is already building without waiting for the hub. This
    *  link surfaces those projects wherever the Build story renders (home
@@ -1234,7 +1262,7 @@ export const COMMUNITY_PAGE = {
   ],
   channelsTitle: "Where we talk",
   channelsNote:
-    "Join the Telegram groups, watch community videos on YouTube, and follow updates on X and LinkedIn.",
+    "Join the Telegram groups, follow community updates, and find our source and releases on GitHub.",
   /** The whole visible state of a `mock: true` channel: the full card wears
    *  it as the chip (and renders no handle line at all), the compact list
    *  shows it where a live channel shows its link. Placeholder handles are
@@ -1293,7 +1321,7 @@ export const COMMUNITY_PAGE = {
    * House style here, and it is deliberate: no em dashes, no "it is not X, it
    * is Y", no three-part flourishes. Plain sentences that tell someone what to
    * do. Nothing quotes a measured figure either: the release page is the
-   * source for the version, which is read from its manifest at render time.
+   * source for the version displayed here.
    */
   runNode: {
     eyebrow: "Run a node",
@@ -1308,12 +1336,12 @@ export const COMMUNITY_PAGE = {
       {
         n: "02",
         title: "Get the release",
-        body: "The release page always opens on the current community build and carries the documentation for it. Copy the link and open it, or paste it into an AI assistant and let it walk you through the install.",
+        body: "Find the current community build, its checksums and release notes. Choose the archive for your system.",
       },
       {
         n: "03",
         title: "Install and sync",
-        body: "Follow the instructions on the release page. Your node then reads the history from genesis and catches up to the head. Nothing here needs a hosting provider or an account with anyone. A node is finished once it is in sync and holding peers. Mining is a separate choice, and it has its own page.",
+        body: "Follow the installation instructions for the release you verified. Your node is ready when it is in sync and holding peers. You can run it without mining.",
       },
     ],
     hardware: {
@@ -1326,13 +1354,6 @@ export const COMMUNITY_PAGE = {
       storageNote:
         "A spinning disk cannot keep pace with the chain, so a node on one never finishes syncing.",
     },
-    /**
-     * The agent route. /mining-onboarding.md is GENERATED from CHAIN and the
-     * release manifest, so the endpoints and the release it names cannot drift
-     * from the rest of the site. It deliberately carries no install commands:
-     * the release page ships a signed, version-specific runbook, and a second
-     * copy of those steps here would go stale on the next release.
-     */
     agent: {
       title: "Recommended: let an agent do it",
       body: "Install an AI agent on the node, give it access to the machine, and point it at the release. Download the onboarding brief below and hand it over. It collects what only you know, your hardware and your storage, then walks the agent through installing the stack and syncing the chain.",
@@ -1347,28 +1368,11 @@ export const COMMUNITY_PAGE = {
       linkLabel: "Or give the agent this link",
       url: "https://bdag.community/node-onboarding.md",
     },
-    /**
-     * The release URL is the release page's ROOT, never a pinned version.
-     *
-     * A specific release was named here first and it was already superseded:
-     * the build it pointed at had been replaced two days after publication and
-     * the page had no way of knowing. The root always redirects to the current
-     * release, so it cannot go stale, and the version shown beside it is READ
-     * from that release's manifest at render time.
-     */
     release: {
-      label: "Release page",
-      /** Root, not a version. See the note above. */
-      url: "https://blockdagengineering.github.io/bdag-ipfs-release-page/",
-      /** Rendered only when the manifest could actually be read. */
-      currentLabel: "Current release",
-      unavailable:
-        "Open the release page for the version published right now.",
-      /** Older builds are not listed anywhere: the release page publishes no
-       *  index and the repository behind it is not public, so the honest thing
-       *  is to say the page carries the current one and stop there. */
-      historyNote:
-        "Only the current release is published. There is no archive of earlier builds.",
+      label: "Browse stack releases",
+      href: RELEASES_PAGE.href,
+      currentLabel: "Latest published release",
+      unavailable: "Open the releases page for published downloads and checksums.",
     },
   },
   waysTitle: "Ways to take part",
@@ -1387,9 +1391,9 @@ export const COMMUNITY_PAGE = {
     },
     {
       title: "Build with us",
-      body: "Utilities, tooling, integrations: bdag.dev and the DAO are landing soon.",
-      href: "/community#build",
-      cta: "What's coming",
+      body: "Explore the community repositories and propose improvements to the software.",
+      href: OPEN_SOURCE.href,
+      cta: "Explore open source",
     },
     {
       title: "Spread the word",
@@ -1487,7 +1491,7 @@ export const MINING_PAGE = {
       },
       {
         title: "Enable the mining profile",
-        body: "A fresh install defaults to sync-only with no miner. Turning the mining profile on is a separate, explicit choice, and it brings the pool with it. Give it a 0x reward address you control. It never needs a seed phrase or a private key.",
+        body: "Choose the mining pool deployment and let the node sync before connecting an ASIC. Use a public 0x reward address you control.",
       },
       {
         title: "Connect the miner",
@@ -1498,9 +1502,8 @@ export const MINING_PAGE = {
 
   /**
    * The agent route, same shape as Community's but for the full path. The
-   * brief is GENERATED at /mining-onboarding.md from CHAIN and the release
-   * manifest, and it carries no install commands of its own: the release page
-   * ships a signed, version-specific runbook and that is the authority.
+   * brief is generated at /mining-onboarding.md from the canonical network
+   * and the latest published stack release.
    */
   agent: {
     title: "Recommended: let an agent do it",
@@ -1516,8 +1519,9 @@ export const MINING_PAGE = {
   },
 
   endpoints: {
-    title: "Take the pool details from the release",
-    note: "An ASIC connects to a mining pool's Stratum endpoint, not the public JSON-RPC. The pool comes with the node's mining profile, so its configuration is in the release runbook rather than here. Mine to a 0x reward address you control, and do not inherit pool settings from an older guide.",
+    title: "Set up a mining pool",
+    release: { label: "Browse stack releases", href: RELEASES_PAGE.href },
+    note: "Connect your ASIC to the mining pool's Stratum endpoint. Use the configuration instructions for the stack release you installed and a public 0x reward address you control.",
     support: { label: "Miner details at bdag.co", url: FAMILY_SITES.miners.url },
     more: { label: "Open the chain reference", href: "/chain" },
   },
@@ -1757,8 +1761,8 @@ export const FAQ_PAGE = {
     {
       id: "is-code-open-source",
       q: "Is the node software open source? Can I run it myself?",
-      a: "You can run a node today and verify the chain yourself. The engineering repository is currently access controlled. Public source, tagged releases and published binary checksums are planned.",
-      more: { label: "Find out how to run a node", href: "/community#run-a-node" },
+      a: "Yes. The BlockDAG Community Stack source is public. The release page has Linux packages, corresponding source and SHA-256 verification files. You can use them to run your own node and verify the chain yourself.",
+      more: { label: "See downloads and source", href: RELEASES_PAGE.href },
     },
     {
       id: "staying-safe",

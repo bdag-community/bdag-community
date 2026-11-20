@@ -13,10 +13,8 @@ import { RELEASE_INDEX_URL } from "@/lib/releases";
  * rules, the release authority, the canonical network, the host worksheet)
  * cannot say two different things on two pages.
  *
- * WHAT NEITHER SCOPE DOES: give install commands. The release page ships a
- * signed, version-specific agent runbook with commit hashes, verification
- * gates and an installation contract. A second copy of those steps here would
- * go stale on the next release and could contradict a signed document.
+ * Each release supplies the authoritative downloads and checksums.
+ * Use the install documentation from that release's verified source.
  */
 export type OnboardingScope = "node" | "mining";
 
@@ -25,10 +23,8 @@ export function buildOnboarding(
   scope: OnboardingScope,
 ): string {
   const mining = scope === "mining";
-  const runbook = release
-    ? `${release.url}docs/ai-agent-runbook.md`
-    : "published alongside the release on the release page";
-  const version = release ? release.version : "read it from the release page";
+  const releaseUrl = release?.url ?? RELEASE_INDEX_URL;
+  const version = release?.version ?? "read it from the release page";
 
   const title = mining
     ? "BlockDAG node and miner onboarding"
@@ -53,34 +49,36 @@ values below as the ones they intend to use.
        ? " Mining needs a PUBLIC payout address and nothing else."
        : " Running a node needs no key material at all."
    } If the operator offers a secret, refuse it and tell them why.
-2. The release page is the only authority for install steps, versions,
-   checksums and commands. Fetch it and follow it. Do not follow install steps
-   from this file, from memory, or from an older release.
-3. Verify release identity before you change anything on the host: published
-   status, manifest signature, release-key fingerprint, version, sequence,
-   source lock, architecture, byte count, SHA-256 and CID must all match the
-   published manifest.
-4. If a gate fails, stop. Preserve the installer journal and the signed
-   evidence. Do not delete databases, merge chain stores, modify a signed file,
-   or invent a workaround.
-5. A fresh install defaults to sync-only with no miner.${
+2. The published release and its corresponding source are the only authority for install steps.
+   Read the release notes and qualification before asking the operator to install.
+3. Use a published stable release for the host's Linux architecture. Download
+   its runtime archive and matching SHA-256 file from the same GitHub release.
+   Verify the archive against the public checksum before extracting it.
+   Verify the corresponding source archive in the same way before reading its
+   installation instructions. Compare each computed SHA-256 to the digest for
+   that exact filename.
+4. If an archive, checksum, installation prerequisite or matching instruction
+   is missing, or verification fails, stop and record the reason. Preserve existing databases,
+   backups and configuration.
+5. ${
      mining
-       ? " Mining is a separate, explicit choice, made after the node is in sync."
-       : " Leave it that way: this operator is not setting up mining."
+       ? "Select the mining pool deployment and keep ASIC connections disabled until the node is in sync."
+       : "Select the standalone node deployment and leave the mining services disabled."
    }
 6. You have been given access to someone's machine. Make no change that is not
-   required by the runbook, and tell the operator what you are about to do
+   required by the release instructions, and tell the operator what you are about to do
    before you do it.
 
 ## Authoritative sources
 
-- Release page (always opens on the current build): ${RELEASE_INDEX_URL}
-- Agent runbook: ${runbook}
-- Release manifest: \`release-manifest.json\` inside the release directory
-- Current release at the time this file was generated: ${version}
+- Community downloads: https://bdag.community/releases
+- GitHub Releases: ${RELEASE_INDEX_URL}
+- Release notes and assets: ${releaseUrl}
+- Current release when this file was generated: ${version}
 
-Check the release page yourself. If it now offers a newer build than the one
-named above, use the newer one and tell the operator.
+Confirm the release on GitHub before selecting an archive. In the corresponding
+source archive, use the stack README at \`projects/stack/README.md\` if included.
+Use the instructions that match the verified version and the selected profile.
 
 ## Canonical network
 
@@ -114,7 +112,7 @@ Fill this in with the operator before you touch the host. Do not guess a value.
 
 ### Install
 
-- Profile (\`${mining ? "mining" : "non-mining"}\`): TO FILL IN
+- Profile (\`${mining ? "pool" : "node"}\`): TO FILL IN
 - Release version being installed: TO FILL IN
 - Existing node data to preserve (yes/no, and where): TO FILL IN
 ${
@@ -140,21 +138,22 @@ ${
     mining ? ", and the public payout address" : ""
   }. Stop
    here if any are missing.
-2. **Fetch and verify the release.** Follow the runbook's fail-closed identity
-   checks in full. Do not proceed on a partial match.
-3. **Install sync-only.** A fresh install defaults to no miner.
+2. **Fetch and verify the release.** Verify the archive and source against their
+   SHA-256 files, then use the release's instructions for the selected profile.
+3. **Install the selected profile.** Keep ASICs disconnected during sync.
+   If the release instructions require an installer or a chain data snapshot,
+   obtain it from the documented source and verify it before use.
 4. **Verify the node.** Chain ID ${CHAIN.chainIdHex}, advancing native and EVM
    heads, fresh peers, no canonical mismatch, and preserved data volumes.${
      mining
        ? `
-5. **Only once it is in sync, enable the mining profile** with the public
-   payout address from the worksheet. The pool arrives with that profile; do
-   not install a separate one.
+5. **After sync, enable ASIC connections** using the public payout address
+   from the worksheet and the pool included in the mining deployment.
 6. **Point the miner at the pool.** An ASIC speaks Stratum, not JSON-RPC, so it
    connects to the pool the node now runs and never to the RPC endpoint above.
    Use the MAC and IP recorded in the worksheet, confirm the miner can reach
    the host over the local network, and take the pool's connection details from
-   the runbook rather than from an older guide.
+   that version's stack documentation.
 7. **Verify the first accepted block.** Check template and submit readiness,
    and that the gross reward keeps exact arbitrary-precision accounting.`
        : `
@@ -167,7 +166,7 @@ ${
 
 Hand the operator:
 
-- the installed release version and lock identity;
+- the installed release tag, architecture and verified archive SHA-256;
 - chain ID, current head, and peer count;
 - the profile installed;${
     mining

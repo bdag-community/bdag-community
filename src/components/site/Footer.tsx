@@ -9,6 +9,7 @@ import {
   CHANNELS,
   CONTACT_EMAIL,
   CONTACT_EMAIL_MOCK,
+  RELEASES_PAGE,
   RISK_SMALL_PRINT,
   SITE,
 } from "@/lib/content/site";
@@ -29,6 +30,7 @@ const COLUMNS = [
       { label: "Staking", href: "/staking" },
       { label: "Projects", href: "/community/projects" },
       { label: "Testnet", href: "/testnet" },
+      { label: RELEASES_PAGE.title, href: RELEASES_PAGE.href },
     ],
   },
   {
@@ -59,7 +61,7 @@ const FOCUS =
   "focus-visible:ring-offset-2 focus-visible:ring-offset-base-void";
 
 const SOCIAL_CHANNELS = CHANNELS.filter(
-  (channel) => channel.name === "YouTube" || channel.name === "X (Twitter)",
+  (channel) => channel.name === "YouTube" || channel.name === "X (Twitter)" || channel.name === "GitHub",
 );
 
 export function Footer() {
@@ -190,19 +192,6 @@ export function Footer() {
                 {CHAIN.genesisLabel}
               </li>
             </ul>
-            <p className="text-xs text-on-surface-variant">
-              {CHANNELS.filter((c) => c.mock)
-                .map((c) => c.name)
-                .join(" and ")}{" "}
-              are coming soon.{" "}
-              <Link
-                href="/community"
-                className={`inline-flex min-h-[44px] items-center underline underline-offset-2 ${LINK}`}
-              >
-                Find us here
-              </Link>
-              .
-            </p>
           </div>
         </div>
 

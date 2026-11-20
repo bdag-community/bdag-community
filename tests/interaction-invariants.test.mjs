@@ -16,7 +16,7 @@ test("desktop navigation and footer links keep a 44px interaction target", () =>
   );
   assert.match(
     footer,
-    /inline-flex min-h-\[44px\] items-center underline underline-offset-2/,
+    /inline-flex min-h-\[44px\] items-center gap-1\.5/,
   );
 });
 
