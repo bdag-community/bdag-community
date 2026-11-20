@@ -25,6 +25,7 @@ concurrency:
 
 jobs:
   checks:
+    name: Website checks
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -37,11 +38,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx next typegen && npx tsc --noEmit
+      - run: npm run lint
       - run: npm test
 
   build:
     needs: checks
-    if: github.event_name != 'pull_request' && vars.FRONTEND_BUILD_ENABLED == 'true'
+    if: github.repository == 'bdag-community/bdag-community' && github.event_name != 'pull_request' && vars.FRONTEND_BUILD_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -91,6 +93,9 @@ jobs:
     if: ${{ github.repository == 'bdag-community/bdag-community' && github.ref == 'refs/heads/main' && ((vars.XNEELO_DEPLOY_ENABLED == 'true' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_live && !inputs.verify_xneelo))) || (github.event_name == 'workflow_dispatch' && inputs.verify_xneelo && !inputs.publish_live)) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    environment:
+      name: production
+      url: https://bdag.community
     concurrency:
       group: xneelo-community
       cancel-in-progress: false

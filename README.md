@@ -1,12 +1,12 @@
 # bdag-community
 
-The public face of the BDAG Community — the community that has been running
-BlockDAG Network from Genesis. Its intended public home is
-**https://bdag.community**; no public deployment has been made yet.
+This repository powers [bdag.community](https://bdag.community), the website
+for the community that has been running BlockDAG Network since Genesis.
+See [CONTRIBUTING.md](CONTRIBUTING.md) to propose changes to the website and
+[LICENSING.md](LICENSING.md) for code and media licensing.
 
-Sibling of [bdag-miner-sales](https://github.com/DigiMountOrg/bdag-miner-sales)
-(bdag.co): same stack, same brand family, its own "Stately Plum" design world
-(see `DESIGN.md`; product truth in `PRODUCT.md`).
+Node and mining-pool downloads are published in [BDAG Community Stack
+Releases](https://github.com/bdag-community/bdag-stack-releases/releases).
 
 ## Community guides and article buttons
 
@@ -57,10 +57,11 @@ stable.
 ## Develop
 
 ```bash
-npm install
+npm ci
 npm run dev        # http://localhost:3002
 npm test           # zero-dep source-assertion suite (node:test)
 npm run lint
+npx next typegen
 npx tsc --noEmit
 ```
 
@@ -75,12 +76,9 @@ migrations, and the admin-claim hook. See
 docker compose --env-file .env.local up --build -d   # http://localhost:3011
 ```
 
-The intended workflow deploys from `main` via `.github/workflows/deploy.yml`:
-source is archived to the VM and built **on the server** (never cross-build
-from Apple Silicon — Node segfaults under QEMU). The current `ops/deploy.sh`
-still needs the start-before-stop safety work recorded in
-`SITE-AUDIT-BACKLOG.md` before a first public deployment. CI (`ci.yml`) gates
-PRs and `develop` with typecheck + lint + tests.
+An approved promotion from `develop` to `main` runs the production deployment.
+GitHub Actions builds a checksummed package and Xneelo checks the candidate
+before switching live traffic. See [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Editorial rules
 
