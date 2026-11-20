@@ -10,13 +10,13 @@ const packageLock = JSON.parse(
 );
 
 test("Step 10 owns patched framework and image-processing dependencies", () => {
-  assert.equal(packageJson.dependencies.next, "16.3.0");
-  assert.equal(packageJson.devDependencies["eslint-config-next"], "16.3.0");
+  assert.equal(packageJson.dependencies.next, "16.4.6");
+  assert.equal(packageJson.devDependencies["eslint-config-next"], "16.4.6");
   assert.equal(packageJson.dependencies.sharp, "0.35.3");
-  assert.equal(packageLock.packages["node_modules/next"].version, "16.3.0");
+  assert.equal(packageLock.packages["node_modules/next"].version, "16.4.6");
   assert.equal(
     packageLock.packages["node_modules/eslint-config-next"].version,
-    "16.3.0",
+    "16.4.6",
   );
   assert.equal(packageLock.packages["node_modules/sharp"].version, "0.35.3");
 });
