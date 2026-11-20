@@ -27,8 +27,8 @@ export default async function ReleasesPage() {
   const past = history?.filter(({ tag }) => tag !== latest?.tag);
 
   return (
-    <>
-      <Section as="section" className="flex flex-col gap-6 pt-14 sm:pt-20" aria-labelledby="releases-title">
+    <Section className="flex flex-col gap-10 pt-6 sm:gap-12 sm:pt-12">
+      <section className="flex flex-col gap-5" aria-labelledby="releases-title">
         <h1 id="releases-title" className="h1">{copy.title}</h1>
         <p className="lead max-w-[62ch]">{copy.intro}</p>
         <div className="flex flex-wrap gap-3">
@@ -39,9 +39,9 @@ export default async function ReleasesPage() {
             {copy.source.label}
           </Button>
         </div>
-      </Section>
+      </section>
 
-      <Section as="section" className="pt-8 sm:pt-12" aria-labelledby="latest-release">
+      <section aria-labelledby="latest-release">
         <Card className="flex flex-col gap-6 border-t-accent/60 p-6 sm:p-8">
           <div className="flex flex-col gap-2">
             {latest && <p className="eyebrow text-teal-soft">{copy.latest}</p>}
@@ -85,9 +85,9 @@ export default async function ReleasesPage() {
             </>
           ) : <p className="body-sm">{copy.unavailable}</p>}
         </Card>
-      </Section>
+      </section>
 
-      <Section as="section" className="pt-10 sm:pt-14" aria-labelledby="release-history">
+      <section aria-labelledby="release-history">
         <h2 id="release-history" className="h2 mb-5">{copy.history}</h2>
         {past?.length ? (
           <ul className="divide-y divide-border/60 border-y border-border/60">
@@ -108,7 +108,7 @@ export default async function ReleasesPage() {
           <Link href={OPEN_SOURCE.href} className={textLink}>{OPEN_SOURCE.title}</Link>
           <Link href={copy.testnet.href} className={textLink}>{copy.testnet.label}</Link>
         </div>
-      </Section>
-    </>
+      </section>
+    </Section>
   );
 }
