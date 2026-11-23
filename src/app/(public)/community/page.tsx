@@ -11,7 +11,7 @@ import { Disclaimer } from "@/components/site/Disclaimer";
 import { ChannelCard } from "@/components/community/ChannelCard";
 import { PageHero } from "@/components/site/PageHero";
 import { CommunityArt } from "@/components/site/PageHeroArt";
-import { CopySnippet } from "@/components/community/CopySnippet";
+import { MainnetRpcReference, MainnetWalletConfig } from "@/components/chain/MainnetConnection";
 import { PrincipleGrid } from "@/components/community/PrincipleGrid";
 import { CommunityViewSwitch } from "@/components/community/CommunityViewSwitch";
 import { SuggestionDisclosure } from "@/components/community/SuggestionDisclosure";
@@ -27,7 +27,6 @@ import {
   META_DESCRIPTIONS,
   NODES_SECTION,
   OPEN_SOURCE,
-  WALLET_CONFIG_SNIPPET,
 } from "@/lib/content/site";
 
 export const metadata: Metadata = {
@@ -209,12 +208,12 @@ export default async function CommunityPage() {
           <Reveal delay={0.1} className="min-w-0">
             <Card className="flex h-full flex-col gap-4 p-6">
               <p className="label-caps">{COMMUNITY_PAGE.walletConfigTitle}</p>
-              <CopySnippet value={WALLET_CONFIG_SNIPPET} label="wallet config" />
+              <MainnetWalletConfig />
               <dl className="grid gap-x-8 gap-y-3 border-t border-border/60 pt-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1">
                   <dt className="label-caps">{ENDPOINT_LABELS.rpc}</dt>
                   <dd>
-                    <CopyRef value={`${CHAIN.rpcUrl}/`} label="RPC URL" />
+                    <MainnetRpcReference format="copy" />
                   </dd>
                 </div>
                 <div className="flex flex-col gap-1">

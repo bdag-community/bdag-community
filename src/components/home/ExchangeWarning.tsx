@@ -3,6 +3,8 @@ import { ArrowRight, Network, Server, ShieldAlert } from "lucide-react";
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { CopyRef } from "@/components/ui/CopyRef";
+import { MainnetRpcReference } from "@/components/chain/MainnetConnection";
+import { MAINNET_EXPLORER_URL } from "@/lib/chain/mainnet-endpoints";
 import { SpineFrame } from "@/components/spine/SpineFrame";
 import { Reveal } from "@/components/ui/Reveal";
 import { CHAIN, ENDPOINT_LABELS, EXCHANGE_WARNING } from "@/lib/content/site";
@@ -130,7 +132,7 @@ export function ExchangeWarning() {
                 {EXCHANGE_WARNING.rpcLabel}
               </dt>
               <dd>
-                <CopyRef value={`${CHAIN.rpcUrl}/`} label="RPC URL" />
+                <MainnetRpcReference format="copy" />
               </dd>
               {/* A text link, not a second button: the card has one action,
                   and it is running your own node. It points at the node
@@ -158,7 +160,7 @@ export function ExchangeWarning() {
               </dt>
               <dd>
                 <CopyRef
-                  value={`${CHAIN.explorerUrl}/`}
+                  value={MAINNET_EXPLORER_URL}
                   label="explorer URL"
                 />
               </dd>

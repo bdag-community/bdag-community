@@ -8,16 +8,8 @@ const DASH = "—";
 const grouped = new Intl.NumberFormat("en");
 
 /**
- * The live hairline inside the connect card: is the endpoint you are about to
- * copy answering right now, what head is it at, and does it identify as the
- * chain this page says it is.
- *
- * It reads the readout's snapshot rather than fetching its own. The four
- * values above it are configuration and never change; this line is the only
- * thing in that card that moves, and it must move on the same twelve-second
- * beat as everything else on the page — a second poller at a second cadence
- * would show a different head to the one in the band a screen higher up, and
- * two different heads on one page is worse than no head at all.
+ * Live network readings from the same snapshot as the readout above it.
+ * Wallet recommendations are checked separately by the shared node monitor.
  */
 export function ConnectPulse() {
   const { snapshot, degraded, height } = useChainHeight();

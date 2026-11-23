@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { CopyRef } from "@/components/ui/CopyRef";
 import { Reveal, RevealGroup, RevealItem } from "@/components/ui/Reveal";
 import { Disclaimer } from "@/components/site/Disclaimer";
+import { MAINNET_EXPLORER_URL } from "@/lib/chain/mainnet-endpoints";
 import { cn } from "@/lib/utils/cn";
 import {
   CHAIN,
@@ -27,10 +28,8 @@ export const metadata: Metadata = {
 
 /**
  * Staking — participation without hardware. Order: intro, the status card
- * first (the coming replacement, then the current platform with its caution
- * and the platform + explorer links), the candour block (what we will and
- * won't tell you — deliberately in brand language, NOT warn-orange: it is
- * honesty, not a warning), the on-chain facts (contract + pools, copyable),
+ * first (the coming replacement and the explorer link), the candour block,
+ * the on-chain facts (contract + pools, copyable),
  * how the contract works, and the non-affiliation disclaimer.
  */
 export default function StakingPage() {
@@ -51,17 +50,7 @@ export default function StakingPage() {
       <Section><TestnetLink headingLevel={2} /></Section>
 
       {/* ------------------------- Status, up front ------------------------- */}
-      {/* First, because nothing below it should be acted on unread. The card
-          leads with the replacement (a new interface and a new contract),
-          then names the current platform with its caution in the same
-          paragraph as the link, never one without the other. The
-          paragraphs sit at the card's own left padding like the exchange
-          warning card's body copy: the old markup hung every paragraph in a
-          column beside the icon, which indented the whole body under
-          nothing. The icon lives in the heading row, top-aligned with a
-          first-line nudge because .h3 text-balances this title onto two
-          lines on portrait phones, where a centred icon would float in the
-          gap between them. */}
+      {/* Keep the launch status above the contract explanation. */}
       <Section as="section" aria-labelledby="status-heading">
         <Reveal>
           <div className="rounded-2xl border border-accent/30 bg-accent/5 p-6 sm:p-8">
@@ -78,30 +67,12 @@ export default function StakingPage() {
                   measure in globals.css, and the owner wants this card's copy
                   to run the card's whole width (2026-08-13). */}
               <p className="body max-w-none">{STAKING_PAGE.status.body}</p>
-              {/* The caution and the platform's name share one paragraph at
-                  body size: a reader who finds the link finds the warning. */}
-              <p className="body max-w-none">{STAKING_PAGE.status.current}</p>
               <p className="body-sm max-w-none">
                 {STAKING_PAGE.status.meanwhile}
               </p>
-              <div className="mt-2 flex flex-wrap gap-3">
+              <div className="mt-2">
                 <Button
-                  href={STAKING_PAGE.status.platformCta.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variant="ghost"
-                  trailingIcon={
-                    <ArrowUpRight
-                      className="size-4"
-                      strokeWidth={2}
-                      aria-hidden
-                    />
-                  }
-                >
-                  {STAKING_PAGE.status.platformCta.label}
-                </Button>
-                <Button
-                  href={STATS_SECTION.viewAll.url}
+                  href={MAINNET_EXPLORER_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   variant="ghost"

@@ -210,10 +210,13 @@ test("the FAQ answers stay inside the site's own claims", () => {
   // No fixed-return language and no venue endorsements.
   assert.match(copy, /variable/i);
   assert.match(copy, /does not endorse venues/i);
-  // The staking answer agrees with the staking page: the current platform is
-  // reachable but not recommended, and the claiming issue is named.
-  assert.match(copy, /do not recommend staking on it/i);
-  assert.match(copy, /claiming/i);
+  const stakingAnswer = copy.slice(
+    copy.indexOf('id: "can-i-stake"'),
+    copy.indexOf('id: "legacy-staking-withdrawals"'),
+  );
+  assert.match(stakingAnswer, /Community Testnet/);
+  assert.match(stakingAnswer, /new Mainnet staking site/);
+  assert.match(stakingAnswer, /href: "\/staking"/);
   // Every answer ends at the page that evidences it, as the intro promises.
   const questions = (copy.match(/q: "/g) ?? []).length;
   const links = (copy.match(/more: \{/g) ?? []).length;
@@ -557,16 +560,17 @@ test("the fork warning names the fork, never links it, and hands over a way out"
   assert.match(w, /recommendCta:\s*\{\s*label:[^}]*href:\s*"\/community#run-a-node"/);
 
   // All three values an integrator has to get right, each copyable.
-  assert.match(w, /endpointsTitle: "Canonical endpoints"/);
+  assert.match(w, /endpointsTitle: "Mainnet endpoints"/);
   assert.match(w, /rpcLabel: "Public RPC"/);
   assert.match(w, /explorerLabel: "Explorer"/);
   const warningTsx = read("../src/components/home/ExchangeWarning.tsx");
   assert.equal(
     (warningTsx.match(/<CopyRef/g) ?? []).length,
-    3,
-    "RPC, explorer and chain ID are each copyable",
+    2,
+    "Explorer and chain ID have copy controls",
   );
-  assert.match(warningTsx, /CHAIN\.explorerUrl/);
+  assert.match(warningTsx, /<MainnetRpcReference format="copy" \/>/);
+  assert.match(warningTsx, /MAINNET_EXPLORER_URL/);
 
   // The recommendation is the point of the card, and says so.
   assert.match(w, /recommendBadge: "Recommended"/);
@@ -803,9 +807,11 @@ test("the agent brief is generated, and never asks for a secret", () => {
   // GENERATED, not a file in public/. The endpoints, the chain ID and the
   // release version live in one place already; a static copy would be the one
   // document on this site quietly naming a superseded release.
-  assert.match(lib, /import \{ CHAIN \}/);
+  assert.match(lib, /import \{ CHAIN, SITE \}/);
   assert.match(route, /getLatestRelease/);
-  assert.match(lib, /\$\{CHAIN\.rpcUrl\}/);
+  assert.match(lib, /\$\{SITE\.url\}\/chain#connect/);
+  assert.match(lib, /\$\{MAINNET_EXPLORER_URL\}/);
+  assert.doesNotMatch(lib, /CHAIN\.(rpcUrl|explorerUrl)/);
   assert.match(lib, /\$\{CHAIN\.chainId\}/);
   assert.doesNotMatch(lib, /2\.0\.0-community-rescue/, "no release version typed in");
 
@@ -871,13 +877,8 @@ test("staking leads with the coming replacement before it explains staking", () 
   const page = read("../src/app/(public)/staking/page.tsx");
   const copy = objectAt(site, "export const STAKING_PAGE");
 
-  // The status card comes BEFORE the mechanism is described, and since
-  // 2026-08-13 it leads with the replacement: a new interface AND a new
-  // contract, the exit from the previous version, and where the announcement
-  // will land. Since 2026-08-17 the current platform is back online, so the
-  // card also names it, warns against staking on it in the same paragraph as
-  // the link, names the claiming issue rather than waving at "issues", and
-  // says what it IS good for: an existing staker seeing their position.
+  // The status card introduces the new interface and contract, the Legacy
+  // exit, and where the announcement will appear before explaining staking.
   assert.match(copy, /status: \{/, "the status block must exist");
   assert.match(copy, /coming soon/i, "the new release has not shipped yet");
   assert.match(
@@ -895,36 +896,9 @@ test("staking leads with the coming replacement before it explains staking", () 
     /announce it here when it is ready/i,
     "the announcement channel is this site",
   );
-  // The platform pins run against the status OBJECT, not the whole
-  // STAKING_PAGE slice: the slice includes doc comments that also say
-  // "claiming", and a whole-slice match would stay green if the phrase
-  // drifted out of the card into any other section.
   const statusCopy = objectAt(copy, "status: {");
-  assert.match(
-    statusCopy,
-    /staking\.blockdag\.engineering/,
-    "the card names the current platform readers can reach",
-  );
-  assert.match(
-    statusCopy,
-    /do not recommend staking on it/i,
-    "the caution lives in the status card itself",
-  );
-  assert.match(
-    statusCopy,
-    /claiming/i,
-    "the known issue is named in the card, not waved at",
-  );
-  assert.match(
-    statusCopy,
-    /stake is not gone/i,
-    "the card says what the platform IS good for today",
-  );
-  assert.ok(
-    statusCopy.indexOf("do not recommend") <
-      statusCopy.indexOf("platformCta"),
-    "the warning is stated before the platform link is offered",
-  );
+  assert.doesNotMatch(statusCopy, /staking\.blockdag\.engineering|platformCta/);
+  assert.doesNotMatch(page, /STAKING_PAGE\.status\.platformCta/);
 
   // Position is the point. It must come before the mechanism sections.
   const at = (needle) => page.indexOf(needle);
@@ -974,17 +948,5 @@ test("staking leads with the coming replacement before it explains staking", () 
   // the copy run the card's whole width (2026-08-13).
   assert.match(status, /className="body max-w-none"/);
   assert.match(status, /className="body-sm max-w-none"/);
-  // The new-stance payload actually RENDERS: the platform paragraph at body
-  // size and the platform link in the card's button row. Without these, the
-  // copy pins above stay green while the page silently drops both.
-  assert.match(
-    status,
-    /className="body max-w-none">\{STAKING_PAGE\.status\.current\}/,
-    "the platform caution paragraph renders at body size",
-  );
-  assert.match(
-    status,
-    /STAKING_PAGE\.status\.platformCta\.url/,
-    "the platform link renders in the status card",
-  );
+  assert.match(status, /MAINNET_EXPLORER_URL/);
 });

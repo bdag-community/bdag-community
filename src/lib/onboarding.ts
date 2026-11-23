@@ -1,4 +1,5 @@
-import { CHAIN } from "@/lib/content/site";
+import { MAINNET_EXPLORER_URL } from "@/lib/chain/mainnet-endpoints";
+import { CHAIN, SITE } from "@/lib/content/site";
 import type { NodeRelease } from "@/lib/releases";
 import { RELEASE_INDEX_URL } from "@/lib/releases";
 
@@ -84,8 +85,8 @@ Use the instructions that match the verified version and the selected profile.
 
 | Value | Setting |
 | --- | --- |
-| JSON-RPC | ${CHAIN.rpcUrl}/ |
-| Explorer | ${CHAIN.explorerUrl}/ |
+| Verified public RPCs | ${SITE.url}/chain#connect |
+| Explorer | ${MAINNET_EXPLORER_URL} |
 | Chain ID | ${CHAIN.chainId} (${CHAIN.chainIdHex}) |
 | Native currency | BDAG, 18 decimals |
 
@@ -150,7 +151,7 @@ ${
 5. **After sync, enable ASIC connections** using the public payout address
    from the worksheet and the pool included in the mining deployment.
 6. **Point the miner at the pool.** An ASIC speaks Stratum, not JSON-RPC, so it
-   connects to the pool the node now runs and never to the RPC endpoint above.
+   connects to the pool the node now runs.
    Use the MAC and IP recorded in the worksheet, confirm the miner can reach
    the host over the local network, and take the pool's connection details from
    that version's stack documentation.
