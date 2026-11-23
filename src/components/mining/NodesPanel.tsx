@@ -1,25 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { NodeLatencyBars } from "@/components/chain/NodeLatencyBars";
+import { useNodeStatus } from "@/components/chain/NodeStatusProvider";
 import { VERDICT_UI } from "@/components/mining/verdicts";
 import { Card } from "@/components/ui/Card";
-import { NODES_POLL_MS } from "@/lib/chain/cadence";
-import type { NodeStatus, NodesSnapshot } from "@/lib/chain/nodes";
+import type { NodeStatus } from "@/lib/chain/nodes";
 import { NODES_SECTION, type NodeDef } from "@/lib/content/site";
-
-// The client poll, the route's cache hint and the server's probe TTL are the
-// same number, from one module. They used to be 10s, 10s and 20s, so half of
-// these requests could only ever return bytes the client already had — 360
-// requests an hour per open tab to learn 180 things.
-const POLL_MS = NODES_POLL_MS;
-
-/** Alt-tabbing back is a refetch, and alt-tabbing eight times in five seconds
- *  should not be eight. Anything inside this window is already in flight or
- *  was answered a moment ago. */
-const MIN_REFETCH_MS = 2_000;
 
 const numberFormat = new Intl.NumberFormat("en");
 
@@ -94,65 +83,8 @@ export type NodesPanelProps = {
  * there.
  */
 export function NodesPanel({ variant = "full", initialDefinitions }: NodesPanelProps) {
-  const [snapshot, setSnapshot] = useState<NodesSnapshot | null>(null);
-  const [panelState, setPanelState] = useState<PanelState>("checking");
+  const { snapshot, panelState } = useNodeStatus();
   const [agoSeconds, setAgoSeconds] = useState<number | null>(null);
-  const lastLoadAt = useRef(0);
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setInterval> | null = null;
-    let cancelled = false;
-
-    const load = async () => {
-      const startedAt = Date.now();
-      if (startedAt - lastLoadAt.current < MIN_REFETCH_MS) return;
-      lastLoadAt.current = startedAt;
-      try {
-        const res = await fetch("/api/nodes", { cache: "no-store" });
-        if (!res.ok) throw new Error(String(res.status));
-        const next = (await res.json()) as NodesSnapshot;
-        if (!cancelled) {
-          setSnapshot(next);
-          setPanelState("live");
-        }
-      } catch {
-        if (!cancelled) {
-          // A later failure keeps the last successful readings but marks them
-          // stale. A first-load failure has no readings to stand behind.
-          setPanelState((current) =>
-            current === "live" || current === "stale" ? "stale" : "unavailable",
-          );
-        }
-      }
-    };
-
-    const start = () => {
-      timer ??= setInterval(load, POLL_MS);
-    };
-    const stop = () => {
-      if (timer) {
-        clearInterval(timer);
-        timer = null;
-      }
-    };
-    const sync = () => {
-      if (document.hidden) {
-        stop();
-      } else {
-        void load();
-        start();
-      }
-    };
-
-    void load();
-    if (!document.hidden) start();
-    document.addEventListener("visibilitychange", sync);
-    return () => {
-      cancelled = true;
-      stop();
-      document.removeEventListener("visibilitychange", sync);
-    };
-  }, []);
 
   // "Checked Xs ago" ticker (1s cadence, cheap).
   useEffect(() => {

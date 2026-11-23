@@ -40,13 +40,20 @@ test("the organisation states its non-affiliation as data", () => {
 
 test("the chain schema publishes the canonical identifiers", () => {
   const schema = read("../src/lib/seo/structured-data.ts");
-  for (const field of ["chainId", "currency.symbol", "rpcUrl", "explorerUrl"]) {
+  for (const field of ["chainId", "currency.symbol"]) {
     assert.match(
       schema,
       new RegExp(`CHAIN\\.${field.replace(".", "\\.")}`),
       `the chain schema must carry CHAIN.${field}`,
     );
   }
+  assert.match(schema, /value: abs\("\/chain#connect"\)/);
+  assert.match(schema, /value: MAINNET_EXPLORER_URL/);
+  assert.doesNotMatch(schema, /CHAIN\.(rpcUrl|explorerUrl)/);
+  const llms = read("../src/app/llms.txt/route.ts");
+  assert.match(llms, /\$\{SITE\.url\}\/chain#connect/);
+  assert.match(llms, /\$\{MAINNET_EXPLORER_URL\}/);
+  assert.doesNotMatch(llms, /CHAIN\.(rpcUrl|explorerUrl)/);
 });
 
 test("an article never claims a modification date it does not have", () => {

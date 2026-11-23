@@ -1,5 +1,6 @@
 import "server-only";
 
+import { MAINNET_RPC_PRIORITY, walletRpcMatchesCheckpoint } from "./mainnet-endpoints.ts";
 import {
   RPC_CONSENSUS_CHAIN_ID,
   RPC_CONSENSUS_PIN_HASH,
@@ -209,7 +210,7 @@ function validateCalls(calls: readonly VerifiedRpcCall[]): void {
 }
 
 async function rpcBatchAtSource(
-  source: (typeof AUTOMATIC_RPC_SOURCES)[number],
+  source: FixedRpcSource,
   calls: readonly VerifiedRpcCall[],
   fetchImpl: FetchLike,
 ): Promise<Map<number, unknown>> {
@@ -432,6 +433,38 @@ export async function probeAutomaticRpcSources(
   } finally {
     probeInflight = null;
   }
+}
+
+/** Recommend only fixed public RPCs that can serve the live verified chain. */
+export async function getWalletRpcUrls(): Promise<string[]> {
+  const { consensus } = await probeAutomaticRpcSources();
+  if (!consensus) return [];
+
+  const qualified = await Promise.all(MAINNET_RPC_PRIORITY.map(async (url) => {
+    const source = RPC_SOURCES.find((entry) => entry.url === url);
+    if (!source) return false;
+    try {
+      const replies = await rpcBatchAtSource(source, [
+        { method: "eth_chainId" },
+        { method: "eth_blockNumber" },
+        { method: "eth_getBlockByNumber", params: [`0x${RPC_CONSENSUS_PIN_HEIGHT.toString(16)}`, false] },
+        { method: "eth_getBlockByNumber", params: [`0x${consensus.blockHeight.toString(16)}`, false] },
+      ], fetch);
+      const block = replies.get(3);
+      return walletRpcMatchesCheckpoint({
+        chainId: hexToSafeNumber(replies.get(0)),
+        headHeight: hexToSafeNumber(replies.get(1)),
+        pinHash: readBlockHashAt(replies.get(2), RPC_CONSENSUS_PIN_HEIGHT),
+        checkpointHash: readBlockHashAt(block, consensus.blockHeight),
+        checkpointTime: block && typeof block === "object" && "timestamp" in block
+          ? hexToSafeNumber(block.timestamp)
+          : null,
+      }, consensus, Date.now());
+    } catch {
+      return false;
+    }
+  }));
+  return MAINNET_RPC_PRIORITY.filter((_, index) => qualified[index]);
 }
 
 function verifiedMemberSources(

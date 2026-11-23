@@ -43,7 +43,7 @@ export const META_DESCRIPTIONS = {
   mining:
     "Mine BlockDAG with an X30 or X100 ASIC. How proof of work secures the chain, where devices come from, and what to verify before you start.",
   staking:
-    "A new staking page and contract are coming, with a way out of the current one. The current platform is back online, but we do not recommend staking on it.",
+    "Follow the launch of the new Mainnet staking site and contract, including plans for Legacy withdrawals and Staking V2.",
   faq: "Straight answers on the canonical chain, endpoints, mining safety, staking status, rewards, and where this site's numbers come from.",
   news: "Network updates, incidents, decisions and milestones from the people operating BlockDAG Network, written in the open by the community that runs it.",
   projects:
@@ -124,20 +124,6 @@ export const CHAIN = {
 } as const;
 
 /**
- * The two hostnames, derived rather than retyped.
- *
- * The footer used to print both as string literals sitting next to hrefs that
- * came from CHAIN, so changing an endpoint would have moved the link and left
- * the visible text pointing somewhere else. Anything that renders a hostname
- * as TEXT reads it from here; anything that renders it as a link reads the
- * full URL from CHAIN. Both then move together.
- */
-export const CHAIN_HOSTS = {
-  rpc: new URL(CHAIN.rpcUrl).host,
-  explorer: new URL(CHAIN.explorerUrl).host,
-} as const;
-
-/**
  * The two values a miner, wallet or integrator has to get right, labelled the
  * same way in all four places they render (home's fork warning, Community's
  * wallet-config card, Mining's endpoint callout, and The Chain's connect
@@ -147,18 +133,9 @@ export const CHAIN_HOSTS = {
  * width for "JSON-RPC endpoint".
  */
 export const ENDPOINT_LABELS = {
-  rpc: "Canonical RPC",
+  rpc: "Verified public RPC",
   chainId: "Chain ID",
 } as const;
-
-/** Wallet-config snippet shown to exchanges/integrators and on Community. */
-export const WALLET_CONFIG_SNIPPET = `{
-  "chainId": "0x57c",
-  "chainName": "BlockDAG Mainnet",
-  "rpcUrls": ["https://rpc.blockdag.engineering/"],
-  "nativeCurrency": { "name": "BDAG", "symbol": "BDAG", "decimals": 18 },
-  "blockExplorerUrls": ["https://explorer.blockdag.engineering/"]
-}` as const;
 
 /* ---------------------------------------------------------------------------
  * Sibling sites + market venues
@@ -331,12 +308,9 @@ export const STATS_SECTION = {
   eyebrow: "The network, live",
   title: "The pulse of BlockDAG",
   sub: "Read straight from the canonical chain.",
-  viewAll: {
-    label: "Open the explorer",
-    url: CHAIN.explorerUrl,
-  },
+  viewAll: { label: "Open the explorer" },
   /** Displayed as plain text — deliberately NOT a link. */
-  publicRpc: { label: "Public RPC endpoint", host: "rpc.blockdag.engineering" },
+  publicRpc: { label: "Public RPC endpoint" },
   /** Leads to the node status board, which now lives on The Chain. */
   viewAllNodes: { label: "The Chain, in detail", href: "/chain#nodes" },
   /**
@@ -558,7 +532,7 @@ export const EXCHANGE_WARNING = {
    * shortened the card; the link is what keeps them one click away.
    */
   /** The three values an integrator has to get exactly right, together. */
-  endpointsTitle: "Canonical endpoints",
+  endpointsTitle: "Mainnet endpoints",
   rpcLabel: "Public RPC",
   explorerLabel: "Explorer",
   more: {
@@ -1157,8 +1131,8 @@ export const CHAIN_PAGE = {
     snippetTitle: "Wallet and integrator config",
     snippetNote:
       "Paste this into a wallet's custom-network form, or into an integration's chain registry.",
-    liveOk: "answering now",
-    liveDown: "not answering right now",
+    liveOk: "network verified",
+    liveDown: "live network reading unavailable",
     /**
      * The first ~12 seconds of every visit, before the first poll returns.
      *
@@ -1170,7 +1144,7 @@ export const CHAIN_PAGE = {
      * the words now carry it too. Branch on the `checking` variable that
      * component already computes.
      */
-    liveChecking: "checking the endpoint",
+    liveChecking: "checking the network",
     verified: "chain id verified",
     unverified: "chain id unverified right now",
     /** Same defect, same line, same fix: "unverified right now" is a finding,
@@ -1555,31 +1529,10 @@ export const STAKING_PAGE = {
   subtitle: "Back the network with stake, no hardware required.",
   intro:
     "Staking will let anyone help secure BlockDAG and earn native rewards. The mechanism lives entirely on chain: epochs, pools, and reward distribution are contract logic, not promises.",
-  /**
-   * THE FIRST THING ON THIS PAGE, and the reason it sits above everything
-   * else: nothing below it should be acted on without reading it. Since
-   * 2026-08-13 the card leads with the replacement rather than only naming
-   * the gap. What is coming is a new interface AND a new contract, because
-   * the fix for the current contract's problems includes a way OUT of it,
-   * and the card promises that exit in the same breath as the way forward.
-   * The exit is attributed to the RELEASE, not to the new contract itself:
-   * deploying a new contract does not unlock positions in an old one. Since
-   * 2026-08-17 the current platform is back online and the card NAMES it,
-   * at full body size, with the caution in the same paragraph as the link:
-   * staking on it is not recommended because the known claiming issues are
-   * exactly what the new release fixes, and its honest use today is letting
-   * an existing staker see their position still exists.
-   */
   status: {
     title: "A new way to stake, coming soon",
     body: "We are building a new staking page with a new contract behind it. The release addresses the issues in the current contract and includes a way out of it, so you will be able to unstake, then stake on the new contract and earn rewards going forward. We will announce it here when it is ready.",
-    current:
-      "The current staking platform is back online at staking.blockdag.engineering. We do not recommend staking on it, because it still carries known issues from the previous release, specifically with claiming, and those are exactly what the new release and contract fix. What it can do today is show your position, so if you have staked before, you can see for yourself that your stake is not gone.",
-    meanwhile: "We are working hard to fix all of these issues independently. The explorer also shows the contract and every pool live, so the current state stays readable.",
-    platformCta: {
-      label: "Check your stake on the current platform",
-      url: "https://staking.blockdag.engineering",
-    },
+    meanwhile: "You can view the Legacy staking contract and registered pools in the explorer.",
   },
   honest: {
     title: "What we will and won't tell you",
@@ -1595,10 +1548,6 @@ export const STAKING_PAGE = {
     poolsLabel: "Registered staking pools",
   },
   how: {
-    /** "How it works", not "how you do it": the current platform is
-     *  reachable but the card above recommends against staking on it, so
-     *  these must not read as a to-do list. The title says whose behaviour
-     *  is being described so the section stays descriptive. */
     title: "How the contract works",
     items: [
       {
@@ -1778,7 +1727,7 @@ export const FAQ_PAGE = {
     {
       id: "can-i-stake",
       q: "Can I stake right now?",
-      a: "You can try Staking V2 today on Community Testnet, including choosing a pool, staking, unstaking and claiming. On Mainnet, the Legacy platform can show your existing position. We do not recommend staking on it because of known claiming issues. Watch the staking page for the production V2 launch.",
+      a: "You can try Staking V2 today on Community Testnet, including choosing a pool, staking, unstaking and claiming. Check the staking page for updates on the new Mainnet staking site.",
       more: { label: "Read the staking status", href: "/staking" },
     },
     {

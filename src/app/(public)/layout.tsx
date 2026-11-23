@@ -1,6 +1,7 @@
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { ScrollReset } from "@/components/site/ScrollReset";
+import { NodeStatusProvider } from "@/components/chain/NodeStatusProvider";
 
 /**
  * Public-site chrome: skip link, sticky header, page content, footer.
@@ -19,7 +20,7 @@ export default function PublicLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <>
+    <NodeStatusProvider>
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-gradient-accent focus:px-5 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-on-primary"
@@ -45,6 +46,6 @@ export default function PublicLayout({
         </main>
       </div>
       <Footer />
-    </>
+    </NodeStatusProvider>
   );
 }

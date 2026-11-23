@@ -1,3 +1,4 @@
+import { MAINNET_EXPLORER_URL } from "@/lib/chain/mainnet-endpoints";
 import {
   CHAIN,
   FAMILY_SITES,
@@ -58,8 +59,8 @@ ${NON_AFFILIATION}
 - Network: ${CHAIN.name}
 - EVM chain ID: ${CHAIN.chainId} (hex ${CHAIN.chainIdHex})
 - Native currency: ${CHAIN.currency.symbol}, ${CHAIN.currency.decimals} decimals
-- Canonical JSON-RPC: ${CHAIN.rpcUrl}
-- Canonical explorer: ${CHAIN.explorerUrl}
+- Verified public RPCs: ${SITE.url}/chain#connect
+- Community explorer: ${MAINNET_EXPLORER_URL}
 - Genesis: ${CHAIN.genesisLabel}
 
 A separate operation runs a fork behind a central RPC. Chain ID ${CHAIN.chainId} is the
