@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { CHAIN, CHAIN_HOSTS, SITE } from "@/lib/content/site";
+import { CHAIN, SITE } from "@/lib/content/site";
 
 /**
  * The share card. Until this file existed, every link to this site pasted into
@@ -204,7 +204,7 @@ export default function OpengraphImage() {
           <div style={{ display: "flex" }}>{CHAIN.currency.symbol}</div>
           <div style={{ display: "flex", color: "#6E6385" }}>·</div>
           <div style={{ display: "flex", color: "#8FE9DE" }}>
-            {CHAIN_HOSTS.rpc}
+            {`${SITE.domain}/chain`}
           </div>
         </div>
       </div>

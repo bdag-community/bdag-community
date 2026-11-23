@@ -3,9 +3,10 @@ import { Mail, ArrowUpRight, ShieldAlert, Heart } from "lucide-react";
 import { Section } from "@/components/ui/Section";
 import { Disclaimer } from "@/components/site/Disclaimer";
 import { CurrentYear } from "@/components/site/CurrentYear";
+import { MainnetRpcReference } from "@/components/chain/MainnetConnection";
+import { MAINNET_EXPLORER_URL } from "@/lib/chain/mainnet-endpoints";
 import {
   CHAIN,
-  CHAIN_HOSTS,
   CHANNELS,
   CONTACT_EMAIL,
   CONTACT_EMAIL_MOCK,
@@ -155,12 +156,12 @@ export function Footer() {
             <ul className="flex flex-col gap-1 text-sm">
               <li>
                 <a
-                  href={CHAIN.explorerUrl}
+                  href={MAINNET_EXPLORER_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`inline-flex min-h-[44px] items-center gap-1 py-1.5 font-mono text-xs ${NETWORK_LINK}`}
                 >
-                  {CHAIN_HOSTS.explorer}
+                  {new URL(MAINNET_EXPLORER_URL).host}
                   <ArrowUpRight
                     className="size-3.5"
                     strokeWidth={1.75}
@@ -169,19 +170,10 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a
-                  href={CHAIN.rpcUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <MainnetRpcReference
+                  format="link"
                   className={`inline-flex min-h-[44px] items-center gap-1 py-1.5 font-mono text-xs ${NETWORK_LINK}`}
-                >
-                  {CHAIN_HOSTS.rpc}
-                  <ArrowUpRight
-                    className="size-3.5"
-                    strokeWidth={1.75}
-                    aria-hidden
-                  />
-                </a>
+                />
               </li>
               {/* Shares the links' 44px row box so the three rows keep one
                   rhythm: as a plain short line it made the gap under the

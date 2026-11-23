@@ -1,3 +1,4 @@
+import { MAINNET_EXPLORER_URL } from "@/lib/chain/mainnet-endpoints";
 import {
   CHAIN,
   FAMILY_SITES,
@@ -17,8 +18,8 @@ import type { NewsArticle } from "@/lib/news";
  * is being confused with a fork and with the original sales, and that is
  * exactly the kind of confusion structured data exists to settle.
  *
- * Every value comes from site.ts or from an already-published article. Nothing
- * is authored here — a second copy of a fact drifts from the first.
+ * Network and site values come from shared configuration. Article values come
+ * from the published article.
  */
 
 const ORG_ID = `${SITE.url}/#organization`;
@@ -90,13 +91,13 @@ export function chainSchema() {
       },
       {
         "@type": "PropertyValue",
-        name: "Canonical JSON-RPC endpoint",
-        value: CHAIN.rpcUrl,
+        name: "Verified public RPCs",
+        value: abs("/chain#connect"),
       },
       {
         "@type": "PropertyValue",
-        name: "Canonical explorer",
-        value: CHAIN.explorerUrl,
+        name: "Community explorer",
+        value: MAINNET_EXPLORER_URL,
       },
     ],
     url: abs("/chain"),

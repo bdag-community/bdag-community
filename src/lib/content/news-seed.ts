@@ -35,7 +35,7 @@ export const NEWS_SEED: NewsArticle[] = [
     description:
       "Exchange and custody integrations should use the canonical RPC endpoint, confirm chain ID 1404, and compare block hashes before moving funds.",
     body: [
-      "Exchange and custody integrations should connect to https://rpc.blockdag.engineering. The canonical explorer is https://explorer.blockdag.engineering.",
+      "Use the live Mainnet wallet configuration at https://bdag.community/chain#connect for the currently verified RPC endpoints and explorer.",
       "Start by checking eth_chainId for 1404. Then compare recent and historical block hashes. Chain ID 1404 is necessary but not sufficient because another network can reuse the same number.",
       "Pin the approved endpoints in configuration, monitor the chain head, and pause deposits if block hashes diverge. Test a small transfer before opening normal deposits or withdrawals.",
     ].join("\n\n"),

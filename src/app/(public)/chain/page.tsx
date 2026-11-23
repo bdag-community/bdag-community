@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Reveal, RevealGroup, RevealItem } from "@/components/ui/Reveal";
 import { Disclaimer } from "@/components/site/Disclaimer";
 import { ExchangeWarning } from "@/components/home/ExchangeWarning";
-import { CopySnippet } from "@/components/community/CopySnippet";
+import { MainnetWalletConfig } from "@/components/chain/MainnetConnection";
 import { NodesPanel } from "@/components/mining/NodesPanel";
 import { ChainPrimer } from "@/components/chain/ChainPrimer";
 import { DagSchematic } from "@/components/chain/DagSchematic";
@@ -27,7 +27,6 @@ import {
   MINING_SECTION,
   PROJECTS_SECTION,
   STAKING_SECTION,
-  WALLET_CONFIG_SNIPPET,
 } from "@/lib/content/site";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { getInfrastructureDirectory } from "@/lib/infrastructure";
@@ -321,7 +320,7 @@ export default async function ChainPage() {
                 {CHAIN_PAGE.connect.snippetTitle}
               </h3>
               <p className="body-sm">{CHAIN_PAGE.connect.snippetNote}</p>
-              <CopySnippet value={WALLET_CONFIG_SNIPPET} label="wallet config" />
+              <MainnetWalletConfig />
               {/* The one thing on this page that moves: is the endpoint you are
                   about to paste answering, and does it still identify as the
                   chain this page describes. It stays here rather than moving

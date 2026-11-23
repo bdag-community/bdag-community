@@ -11,6 +11,7 @@ import {
 } from "@/lib/chain/node-verdict";
 import { CHAIN, type NodeDef } from "@/lib/content/site";
 import { getInfrastructureDirectory } from "@/lib/infrastructure";
+import { getWalletRpcUrls } from "@/lib/chain/rpc-sources.server";
 
 export type { NodeVerdict } from "@/lib/chain/node-verdict";
 
@@ -55,6 +56,7 @@ export type NodesSnapshot = {
   nodes: NodeStatus[];
   /** The canonical reference head the deltas are measured against. */
   referenceHeight: number | null;
+  walletRpcUrls: string[];
   checkedAt: string;
 };
 
@@ -188,6 +190,7 @@ async function fetchHashes(
 }
 
 async function assemble(): Promise<NodesSnapshot> {
+  const walletRpcUrls = getWalletRpcUrls().catch(() => []);
   const { rpcs: NODES } = await getInfrastructureDirectory();
   // Probe URLs are derived at runtime — no endpoint URL literals exist in
   // source (the editorial invariant on the fork's host, enforced by tests).
@@ -355,6 +358,7 @@ async function assemble(): Promise<NodesSnapshot> {
       };
     }),
     referenceHeight: refHeight,
+    walletRpcUrls: await walletRpcUrls,
     checkedAt: new Date().toISOString(),
   };
 }

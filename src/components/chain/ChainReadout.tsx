@@ -13,7 +13,9 @@ import { Button } from "@/components/ui/Button";
 import { Section } from "@/components/ui/Section";
 import { StatNumber } from "@/components/ui/StatNumber";
 import type { NetworkStats } from "@/lib/chain/stats";
-import { CHAIN, CHAIN_PAGE, STATS_SECTION } from "@/lib/content/site";
+import { MainnetRpcReference } from "@/components/chain/MainnetConnection";
+import { MAINNET_EXPLORER_URL } from "@/lib/chain/mainnet-endpoints";
+import { CHAIN, CHAIN_PAGE } from "@/lib/content/site";
 
 /**
  * The Chain page's single live-data source.
@@ -352,7 +354,7 @@ export function ChainReadout() {
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-4 border-t border-border/60 pt-6">
           <Button
-            href={CHAIN.explorerUrl}
+            href={MAINNET_EXPLORER_URL}
             target="_blank"
             rel="noopener noreferrer"
             variant="ghost"
@@ -364,9 +366,9 @@ export function ChainReadout() {
           </Button>
           {/* Plain text, not a link — this endpoint is for wallets and integrators
               to copy, not for a browser to open. Machine-facing, so teal. */}
-          <p className="inline-flex min-h-[44px] items-center gap-1.5 font-mono text-sm text-on-surface-variant">
+          <p className="inline-flex min-h-[44px] max-w-full flex-wrap items-center gap-1.5 font-mono text-sm text-on-surface-variant">
             {copy.rpcLabel}:{" "}
-            <span className="text-teal-soft">{STATS_SECTION.publicRpc.host}</span>
+            <MainnetRpcReference format="host" className="break-all text-teal-soft" />
           </p>
           <a
             href="#nodes"

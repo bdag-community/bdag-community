@@ -1,4 +1,3 @@
-import { compressedJson } from "@/app/api/_lib/compressed-json";
 import { NODES_POLL_S } from "@/lib/chain/cadence";
 import { getNodesStatus } from "@/lib/chain/nodes";
 
@@ -13,13 +12,13 @@ import { getNodesStatus } from "@/lib/chain/nodes";
  * ones — 20s, 10s and 10s — and the doc comment here claimed a fourth (30s),
  * which is how you can tell nobody could hold all four in their head.
  *
- * The body is gzipped when the caller accepts it (71% of it was overhead).
+ * Next.js and the proxy negotiate response compression.
  */
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
+export async function GET() {
   const snapshot = await getNodesStatus();
-  return compressedJson(request, snapshot, {
-    "Cache-Control": `public, s-maxage=${NODES_POLL_S}, stale-while-revalidate=60`,
+  return Response.json(snapshot, {
+    headers: { "Cache-Control": `public, s-maxage=${NODES_POLL_S}, stale-while-revalidate=60` },
   });
 }

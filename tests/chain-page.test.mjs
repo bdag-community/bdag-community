@@ -365,15 +365,17 @@ test("the chain readout does not force long numerals into two columns at 320px",
 
 test("the node board distinguishes checking, unavailable, stale, and live", () => {
   const nodes = read("../src/components/mining/NodesPanel.tsx");
+  const monitor = read("../src/components/chain/NodeStatusProvider.tsx");
   const section = site.slice(
     site.indexOf("export const NODES_SECTION"),
     site.indexOf("} as const;", site.indexOf("export const NODES_SECTION")),
   );
 
-  assert.match(nodes, /type PanelState = "checking" \| "live" \| "stale" \| "unavailable"/);
-  assert.match(nodes, /useState<PanelState>\("checking"\)/);
-  assert.match(nodes, /setPanelState\("live"\)/);
-  assert.match(nodes, /current === "live" \|\| current === "stale"/);
+  assert.match(nodes, /\{ snapshot, panelState \} = useNodeStatus\(\)/);
+  assert.match(monitor, /panelState: "checking" \| "live" \| "stale" \| "unavailable"/);
+  assert.match(monitor, /snapshot: null, panelState: "checking", rpcUrls: null/);
+  assert.match(monitor, /setMonitor\(\{ snapshot, panelState: "live", rpcUrls \}\)/);
+  assert.match(monitor, /current\.snapshot \? "stale" : "unavailable"/);
   assert.match(nodes, /panelState === "live"[\s\S]*?bg-accent-teal shadow-live/);
   assert.match(section, /unavailable:\s*"Unavailable"/);
   assert.match(section, /statusLabels:/);
@@ -904,7 +906,7 @@ test("the fork card has one rendering, and /chain does not list the endpoints tw
 
   // Connect keeps the paste-once snippet and the liveness hairline. It must
   // NOT re-list the values the card now carries.
-  assert.match(page, /<CopySnippet/);
+  assert.match(page, /<MainnetWalletConfig \/>/);
   assert.match(page, /<ConnectPulse \/>/);
   assert.doesNotMatch(page, /<CopyRef/, "the labelled values live on the fork card now");
   assert.doesNotMatch(page, /CHAIN\.rpcUrl|CHAIN\.explorerUrl|CHAIN\.chainIdHex/);
