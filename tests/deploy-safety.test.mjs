@@ -30,6 +30,15 @@ test("candidate readiness exceeds the slow upstream health deadline", () => {
   assert.match(deploy, /docker rm -f "\$candidate_name"/);
 });
 
+test("the regenerated Caddy proxy requests plain JSON from snapshot routes", () => {
+  const snapshot = deploy.indexOf('reverse_proxy @snapshot_json 127.0.0.1:');
+  const defaultProxy = deploy.indexOf('reverse_proxy 127.0.0.1:');
+
+  assert.match(deploy, /@snapshot_json path \/api\/stats \/api\/chain-history/);
+  assert.ok(snapshot >= 0 && defaultProxy > snapshot);
+  assert.match(deploy.slice(snapshot, defaultProxy), /header_up Accept-Encoding identity/);
+});
+
 test("a failed traffic switch restores Caddy and keeps the old container", () => {
   assert.match(deploy, /previous_site_file/);
   assert.match(deploy, /restore_caddy/);

@@ -182,11 +182,18 @@ previous_site_file="$(mktemp)"
 had_previous_site="false"
 trap 'rm -f "$next_site_file" "$previous_site_file"; cleanup_candidate' EXIT
 
+# Caddy compresses the public response. Request plain JSON from routes that
+# also compress at the application layer.
 printf '%s\n' \
   'bdag.community {' \
   "  @origin_gate header X-BDAG-Origin ${ORIGIN_GATE_SECRET}" \
+  '  @snapshot_json path /api/stats /api/chain-history' \
   '  handle @origin_gate {' \
   '    encode zstd gzip' \
+  "    reverse_proxy @snapshot_json 127.0.0.1:${candidate_port} {" \
+  '      header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}' \
+  '      header_up Accept-Encoding identity' \
+  '    }' \
   "    reverse_proxy 127.0.0.1:${candidate_port} {" \
   '      header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}' \
   '    }' \
