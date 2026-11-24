@@ -61,9 +61,7 @@ const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent " +
   "focus-visible:ring-offset-2 focus-visible:ring-offset-base-void";
 
-const SOCIAL_CHANNELS = CHANNELS.filter(
-  (channel) => channel.name === "YouTube" || channel.name === "X (Twitter)" || channel.name === "GitHub",
-);
+const SOCIAL_CHANNELS = CHANNELS.filter((channel) => !channel.mock);
 
 export function Footer() {
   return (
