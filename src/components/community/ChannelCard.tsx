@@ -8,6 +8,7 @@ import {
   // MessageCircle, // Restore with Reddit after verification.
   MessagesSquare,
   Send,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
@@ -26,6 +27,7 @@ const CHANNEL_ICONS: Record<(typeof CHANNELS)[number]["name"], LucideIcon> = {
   Discord: MessagesSquare,
   YouTube: Clapperboard,
   "X (Twitter)": Megaphone,
+  CoinMarketCap: TrendingUp,
   GitHub: GitBranch,
 };
 

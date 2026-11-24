@@ -196,6 +196,13 @@ export const CHANNELS = [
     blurb: "Community announcements and network updates.",
     mock: false,
   },
+  {
+    name: "CoinMarketCap",
+    handle: "@BDAGCommunity",
+    url: "https://coinmarketcap.com/community/profile/BDAGCommunity/",
+    blurb: "Follow BDAG Community posts on CoinMarketCap.",
+    mock: false,
+  },
   /* Temporarily hidden on Contact and Community pending Reddit verification
      (2026-10-07). Keep the supplied subreddit ready to restore.
   {
