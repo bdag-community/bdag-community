@@ -389,6 +389,11 @@ test("the supplied community channels are live; the others stay coming-soon", ()
   assert.match(entry("YouTube"), /mock: false/);
   assert.match(entry("X (Twitter)"), /url: "https:\/\/x\.com\/1Bdag_Community"/);
   assert.match(entry("X (Twitter)"), /mock: false/);
+  assert.match(
+    entry("CoinMarketCap"),
+    /url: "https:\/\/coinmarketcap\.com\/community\/profile\/BDAGCommunity\/"/,
+  );
+  assert.match(entry("CoinMarketCap"), /mock: false/);
   assert.doesNotMatch(block, /t\.me\/bdagcommunity\b/, "placeholder invite gone");
   assert.doesNotMatch(block, /t\.me\/BdagCommunityGroup/, "retired community handle gone");
   // Coming soon means NO handle and NO url in the data at all: the old
